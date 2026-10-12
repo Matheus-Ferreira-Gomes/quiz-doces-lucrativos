@@ -21,6 +21,8 @@ window.QUIZ_CONFIG = {
 
   // Opcional: URL que recebe os dados completos do lead via POST
   // (ex: um webhook do n8n, Make, ou da sua plataforma de automação).
+  // Os dados chegam como campos de formulário (lead_id, temperatura, q1..q5,
+  // utm_*, fbc, fbp...) e também todos juntos no campo "json".
   // Deixe vazio ("") para desativar.
   webhookUrl: ""
 };

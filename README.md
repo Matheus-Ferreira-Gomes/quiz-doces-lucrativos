@@ -1,136 +1,182 @@
 # Quiz Doces Lucrativos
 
 Quiz de 5 perguntas que fica entre o seu anúncio (Meta Ads) e o link da sua
-campanha. A pessoa clica no anúncio, responde as perguntas, e no final é
-levada para o seu link, já carregando todos os dados de rastreamento que
-chegaram na URL (fbclid, utm_*, etc).
+campanha. A pessoa clica no anúncio, responde às perguntas e no final é
+levada para o seu link, que recebe junto todos os dados de rastreamento que
+vieram na URL (fbclid, utm_*, ids de campanha etc.).
 
-Este guia é para quem **não é programador**. Siga os passos na ordem.
+Este guia é para quem **não é programador**. Na maioria das vezes você só vai
+mexer em **um arquivo: `config.js`**.
 
 ---
 
-## 1. Como editar o link da campanha (o mais importante)
+## 1. Colar o link da campanha (o mais importante)
 
 1. Abra o arquivo `config.js`.
 2. Encontre a linha:
    ```js
    redirectUrl: "https://COLE-AQUI-O-LINK-DA-CAMPANHA",
    ```
-3. Troque o texto entre aspas pelo link de verdade (WhatsApp, página de
-   vendas etc). Exemplo:
+3. Troque o texto entre aspas pelo seu link (WhatsApp, página de vendas,
+   plataforma de atendimento...). Mantenha as aspas e a vírgula no final:
    ```js
    redirectUrl: "https://wa.me/5511999999999",
    ```
-4. Salve o arquivo.
-5. Se o site já estiver publicado no GitHub, você precisa "subir" essa
-   mudança (commit + push — veja a seção 5 deste README).
+4. Salve e publique a alteração (seção 6).
 
-Enquanto esse campo estiver com o texto de exemplo, a página final mostra um
-aviso (só quando você abre com `?debug=1` na URL) e **não tenta redirecionar**
-para não quebrar a experiência de quem está testando.
+**Pode deixar parâmetros no seu link** (ex.: `?origem=quiz`). O quiz não apaga
+nada: se o mesmo parâmetro existir no seu link e na URL do anúncio, **o do seu
+link vence**.
 
-### Outros campos do `config.js`
+Enquanto o link estiver com o texto de exemplo, o botão final não leva a lugar
+nenhum. No modo de teste (`?debug=1`) aparece um aviso vermelho lembrando você
+de configurar.
 
-- `buttonText`: o texto do botão final (ex: "Falar agora no WhatsApp").
-- `metaPixelId`: se você só tem o número do Pixel do Facebook, cole aqui
-  (só os números). Deixe `""` se não for usar.
-- `sendAnswersInUrl`: deixe `true` para que as respostas do quiz
-  (q1 a q5 e a "temperatura" do lead) sejam enviadas junto no link final.
-- `webhookUrl`: se você usa alguma automação (n8n, Make, etc) que recebe os
-  dados do lead, cole a URL dela aqui. Senão, deixe `""`.
+### Os outros campos do `config.js`
+
+| Campo | Para que serve |
+|---|---|
+| `buttonText` | Texto do botão final. |
+| `metaPixelId` | Número do seu Pixel do Facebook (só números). Deixe `""` se não usar. |
+| `sendAnswersInUrl` | `true` = manda as respostas (q1 a q5) e a `temperatura` no link final. `false` = não manda. |
+| `webhookUrl` | Endereço de uma automação (n8n, Make, Zapier...) que recebe os dados do lead. Deixe `""` se não usar. |
 
 ---
 
-## 2. Como colar o Pixel do Facebook
+## 2. O que vai no link final
 
-Você pode escolher **uma das duas formas**:
+Exemplo de como o link sai no final:
 
-### Forma simples — só o ID
-No `config.js`, preencha:
+```
+https://seu-link.com/?lead_id=DL-7K2Q9&fbc=fb.1.1712...&q1=renda_extra&...&temperatura=quente&fbclid=...&utm_source=facebook&utm_campaign=...
+```
+
+- **lead_id**: código único da pessoa (ex.: `DL-7K2Q9`). O mesmo código vai no
+  evento Lead do pixel, para a Meta não contar a mesma conversão duas vezes.
+- **fbc / fbp**: identificadores do Facebook, que melhoram a atribuição das vendas.
+- **q1 a q5**: respostas do quiz.
+- **temperatura**: `quente` (quer começar agora), `morno` (tem dúvidas) ou
+  `frio` (só pesquisando).
+- **Todos os parâmetros que vieram do anúncio** (fbclid, utm_*, campaign_id,
+  adset_id, ad_id, ctwa_clid, gclid... qualquer um).
+
+**Primeiro clique (first touch):** os parâmetros da primeira visita ficam
+guardados no celular da pessoa. Se ela sair e voltar depois por outro caminho,
+os dados originais continuam valendo.
+
+---
+
+## 3. Instalar o Pixel do Facebook
+
+Escolha **uma** das duas formas.
+
+**Forma simples, só pelo ID.** No `config.js`:
 ```js
 metaPixelId: "123456789012345",
 ```
-O quiz carrega o pixel sozinho.
 
-### Forma avançada — colar o código completo
-Se você copiou o "código base do pixel" direto do Gerenciador de Eventos da
-Meta (aquele bloco grande de `<script>`), abra o arquivo `index.html` e
-procure por:
+**Forma completa, colando o código.** Se você copiou o "código base" do pixel
+no Gerenciador de Eventos (o bloco grande que começa com `<script>`), abra o
+`index.html` e cole entre estas duas linhas:
 ```html
 <!-- ===== COLE AQUI O CÓDIGO DO PIXEL DO FACEBOOK (opcional) ===== -->
 <!-- ===== FIM DO PIXEL ===== -->
 ```
-Cole o código entre essas duas linhas. Nesse caso, **não precisa** preencher
-o `metaPixelId` no `config.js` (se preencher os dois, o quiz detecta que o
-pixel já existe e não duplica nada).
+Se você fizer as duas coisas por engano, tudo bem: o quiz percebe e não duplica
+nada.
+
+**Eventos enviados para a Meta:**
+
+| Evento | Quando |
+|---|---|
+| `PageView` | Ao abrir o quiz. |
+| `QuizStart` (personalizado) | Ao tocar em "Começar agora". |
+| `QuizStep` (personalizado) | A cada resposta, com o número da etapa e a resposta escolhida. |
+| `QuizComplete` (personalizado) | Ao chegar na tela de resultado, com a temperatura. |
+| `Lead` | Ao tocar no botão final, com a temperatura. |
+
+Com esses eventos você pode, por exemplo, criar no Gerenciador de Anúncios
+públicos de quem respondeu "quero começar agora" ou de quem terminou o quiz
+mas não clicou no botão final.
 
 ---
 
-## 3. Como colar a meta tag de verificação de domínio da Meta
+## 4. Colar a meta tag de verificação de domínio da Meta
 
-Isso é opcional e só é necessário se você for verificar o domínio no
-Gerenciador de Negócios da Meta (normalmente feito na Etapa 3, com domínio
-próprio).
+Só é necessário quando o quiz estiver no seu domínio próprio (Etapa 3).
 
-1. No Gerenciador de Negócios, copie a tag `<meta ...>` que a Meta fornece.
-2. Abra `index.html` e procure por:
+1. No Gerenciador de Negócios da Meta, copie a tag `<meta ...>` fornecida.
+2. No `index.html`, cole entre estas duas linhas:
    ```html
    <!-- ===== COLE AQUI A META TAG DE VERIFICAÇÃO DE DOMÍNIO DA META (opcional) ===== -->
    <!-- ===== FIM DA VERIFICAÇÃO ===== -->
    ```
-3. Cole a tag entre essas duas linhas, salve, e suba a alteração (commit + push).
-4. Volte ao Gerenciador de Negócios e clique em "Verificar".
+3. Publique a alteração e clique em "Verificar" na Meta.
 
 ---
 
-## 4. Como testar no seu computador antes de publicar
+## 5. Testar (modo debug)
 
-Se você tiver Python instalado, dentro da pasta do site rode:
-```
-python -m http.server 8000
-```
-E abra no navegador: `http://localhost:8000/`
-
-Para testar com rastreamento e o painel de debug, use:
+Coloque `?debug=1` no final do endereço do quiz, por exemplo:
 ```
 http://localhost:8000/?fbclid=TESTE123&utm_source=facebook&utm_campaign=teste&ad_id=999&debug=1
 ```
-Com `?debug=1` aparece um painel no rodapé mostrando todos os dados
-capturados e a URL final que seria usada — sem redirecionar de verdade.
+
+Aparece uma barrinha escura no rodapé. Toque em **Expandir** para ver os
+parâmetros capturados, fbc, fbp, lead_id, a forma como o pixel foi detectado,
+os eventos disparados e a **URL final completa**. Nesse modo o botão final
+**não redireciona**: ele só mostra a URL, e o botão **Copiar URL** copia o link.
+
+- **Limpar dados**: apaga o que o quiz guardou no seu navegador, para você
+  testar de novo como se fosse uma pessoa nova. Use sempre que for testar com
+  outros parâmetros, porque o quiz guarda os da primeira visita.
+- Atenção: no modo debug os eventos do pixel **são enviados de verdade**.
+  Isso é útil para conferir na ferramenta "Testar eventos" da Meta, mas evite
+  testar muito com o pixel de produção.
+
+Para rodar no seu computador, abra o terminal na pasta do site e rode
+`python -m http.server 8000`. Depois abra `http://localhost:8000/`.
 
 ---
 
-## 5. Como publicar as alterações (depois que o site já estiver no GitHub)
+## 6. Publicar alterações (depois que o site estiver no GitHub)
 
-Se você não sabe usar linha de comando, o jeito mais simples é:
+O jeito mais fácil, sem terminal:
 
-1. Acesse o repositório no site do GitHub (github.com).
-2. Clique no arquivo que você quer mudar (ex: `config.js`).
-3. Clique no ícone de lápis (editar).
-4. Faça a alteração.
-5. Role até o final da página e clique em **"Commit changes"**.
-6. Em 1 ou 2 minutos, o site publicado já estará atualizado.
-
----
-
-## 6. Trocar as imagens
-
-As imagens de exemplo estão na pasta `images/`:
-- `hero-doces.webp` — imagem da tela inicial.
-- `og-image.webp` — imagem que aparece quando o link é compartilhado.
-
-Troque pelos seus arquivos **mantendo os mesmos nomes**, ou, se usar nomes
-diferentes, atualize as referências no `index.html`. Prefira o formato
-`.webp` para o site continuar rápido.
+1. Entre no repositório pelo site github.com.
+2. Clique no arquivo (ex.: `config.js`) e depois no ícone de **lápis**.
+3. Faça a alteração.
+4. Clique em **Commit changes** e confirme.
+5. Em 1 a 2 minutos o site publicado estará atualizado. Se não aparecer, abra
+   numa aba anônima, porque o navegador pode estar mostrando a versão antiga.
 
 ---
 
-## Estrutura dos arquivos
+## 7. Trocar as imagens
 
-- `index.html` — estrutura das telas do quiz.
-- `style.css` — visual (cores, fontes, layout).
-- `config.js` — **o único arquivo que você normalmente precisa editar**.
-- `app.js` — lógica do quiz, rastreamento e pixel (não precisa editar).
-- `images/` — imagens usadas no quiz.
-- `404.html` — página exibida quando um link não existe.
-- `.nojekyll` — arquivo técnico para o GitHub Pages funcionar corretamente.
+Na pasta `images/`:
+
+- `hero-doces.webp`: foto da tela inicial. Use proporção 16:10, por exemplo
+  1280×800 (pode ser menor). Formato **WebP** para manter o site rápido. Dá
+  para converter grátis em squoosh.app.
+- `og-image.jpg`: imagem que aparece quando o link é compartilhado no
+  WhatsApp/Facebook. Tamanho **1200×630**, formato **JPG**.
+
+Mantenha os mesmos nomes de arquivo e substitua os atuais.
+
+---
+
+## Arquivos do projeto
+
+| Arquivo | O que é |
+|---|---|
+| `config.js` | **Suas configurações.** É o único que você precisa editar. |
+| `index.html` | Estrutura das telas e os espaços para colar pixel e meta tag. |
+| `style.css` | Visual: cores, fontes, tamanhos. |
+| `app.js` | Lógica do quiz, rastreamento, pixel e webhook. Não precisa mexer. |
+| `images/` | Imagens. |
+| `404.html` | Página mostrada quando alguém acessa um endereço que não existe. |
+| `.nojekyll` | Arquivo técnico vazio para o GitHub Pages. Não apague. |
+
+Para mudar textos das perguntas, procure o trecho `QUESTIONS` no começo do
+`app.js`. Altere só o texto entre aspas e mantenha as aspas e as vírgulas.

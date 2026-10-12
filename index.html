@@ -5,12 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Descubra quanto você pode lucrar vendendo doces</title>
 <meta name="description" content="Responda 5 perguntas rápidas e descubra o seu potencial de lucro vendendo doces.">
+<meta name="theme-color" content="#fff6ef">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='17' r='13' fill='%235c3a2e'/%3E%3Crect x='10' y='10' width='3' height='1.6' rx='.8' fill='%23f6a6c1' transform='rotate(30 11 11)'/%3E%3Crect x='18' y='12' width='3' height='1.6' rx='.8' fill='%23fff6ef' transform='rotate(-25 19 13)'/%3E%3Crect x='13' y='19' width='3' height='1.6' rx='.8' fill='%23f6a6c1' transform='rotate(60 14 20)'/%3E%3Crect x='20' y='20' width='3' height='1.6' rx='.8' fill='%23fff6ef'/%3E%3C/svg%3E">
 
-<!-- Open Graph -->
+<!-- Open Graph (aparência do link quando compartilhado) -->
+<!-- Na Etapa 3 o og:image vira um endereço completo (https://...), que é o que o Facebook e o WhatsApp exigem -->
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
 <meta property="og:title" content="Descubra quanto você pode lucrar vendendo doces">
 <meta property="og:description" content="Responda 5 perguntas rápidas e receba o seu resultado.">
-<meta property="og:type" content="website">
-<meta property="og:image" content="./images/og-image.webp">
+<meta property="og:image" content="./images/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 
 <!-- ===== COLE AQUI A META TAG DE VERIFICAÇÃO DE DOMÍNIO DA META (opcional) ===== -->
 <!-- ===== FIM DA VERIFICAÇÃO ===== -->
@@ -18,73 +26,97 @@
 <!-- ===== COLE AQUI O CÓDIGO DO PIXEL DO FACEBOOK (opcional) ===== -->
 <!-- ===== FIM DO PIXEL ===== -->
 
+<!-- Fonte carregada sem travar a abertura da página -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"></noscript>
 
 <link rel="stylesheet" href="./style.css">
+<script src="./config.js" defer></script>
+<script src="./app.js" defer></script>
 </head>
 <body>
 
-<div class="progress-bar" id="progressBar" aria-hidden="true">
-  <div class="progress-fill" id="progressFill"></div>
+<div class="topbar" id="topbar" aria-hidden="true">
+  <div class="topbar-fill" id="progressFill"></div>
 </div>
 
-<main class="app" id="app">
+<main class="app">
 
   <!-- Tela 0 — Abertura -->
-  <section class="screen active" data-screen="intro" id="screen-intro">
+  <section class="screen active" id="screen-intro">
     <div class="card">
-      <img src="./images/hero-doces.webp" alt="Doces artesanais" class="hero-img" width="320" height="200">
-      <h1>Descubra quanto você pode lucrar vendendo doces</h1>
+      <p class="brand">Doces Lucrativos</p>
+      <img src="./images/hero-doces.webp" alt="Mesa com doces artesanais" class="hero-img" width="640" height="400" fetchpriority="high" decoding="async">
+      <h1 tabindex="-1">Descubra quanto você pode lucrar vendendo doces</h1>
       <p class="subtitle">Responda 5 perguntas rápidas e receba o seu resultado</p>
+      <p class="resume-note" id="resumeNote" hidden></p>
       <button type="button" class="btn-primary" id="btnStart">Começar agora</button>
+      <button type="button" class="btn-link" id="btnRestart" hidden>Recomeçar do zero</button>
+      <p class="microcopy">Leva menos de 1 minuto · Gratuito</p>
     </div>
   </section>
 
-  <!-- Perguntas (geradas via template no JS) -->
-  <section class="screen" data-screen="question" id="screen-question">
+  <!-- Pergunta (conteúdo preenchido pelo app.js) -->
+  <section class="screen" id="screen-question">
     <div class="card">
-      <button type="button" class="btn-back" id="btnBack" aria-label="Voltar para a pergunta anterior">‹ Voltar</button>
-      <h2 id="questionTitle"></h2>
-      <div class="options" id="optionsContainer" role="group"></div>
+      <div class="card-header">
+        <button type="button" class="btn-back" id="btnBack" aria-label="Voltar">
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Voltar
+        </button>
+        <span class="step-label" id="stepLabel"></span>
+      </div>
+      <h2 id="questionTitle" tabindex="-1"></h2>
+      <div class="options" id="options" role="group" aria-labelledby="questionTitle"></div>
     </div>
   </section>
 
   <!-- Transição entre perguntas -->
-  <section class="screen" data-screen="transition" id="screen-transition">
+  <section class="screen" id="screen-transition">
     <div class="card">
-      <p class="transition-text" id="transitionText"></p>
-      <button type="button" class="btn-primary" id="btnContinue">Continuar</button>
+      <div class="icon-circle" aria-hidden="true">
+        <svg width="30" height="30" viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10.3A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7.5 2.6c0 5.7-7.5 10.3-7.5 10.3z" fill="currentColor"/></svg>
+      </div>
+      <p class="transition-text" id="transitionText" tabindex="-1"></p>
+      <button type="button" class="btn-primary btn-continue" id="btnContinue">
+        Continuar
+        <span class="countdown" aria-hidden="true"></span>
+      </button>
     </div>
   </section>
 
   <!-- Carregando -->
-  <section class="screen" data-screen="loading" id="screen-loading">
-    <div class="card card-center">
-      <div class="spinner" aria-hidden="true"></div>
-      <p class="loading-text">Analisando as suas respostas...</p>
+  <section class="screen" id="screen-loading">
+    <div class="card card-center" role="status">
+      <div class="loader" aria-hidden="true"><span></span><span></span><span></span></div>
+      <p class="loading-text" tabindex="-1">Analisando as suas respostas...</p>
+      <div class="loading-bar" aria-hidden="true"><div></div></div>
     </div>
   </section>
 
   <!-- Resultado final -->
-  <section class="screen" data-screen="result" id="screen-result">
+  <section class="screen" id="screen-result">
     <div class="card">
-      <h2>O seu resultado está pronto!</h2>
+      <div class="icon-circle" aria-hidden="true">
+        <svg width="30" height="30" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h2 tabindex="-1">O seu resultado está pronto!</h2>
       <p class="result-text">Com base nas suas respostas, você tem tudo para transformar os seus doces em uma renda de verdade. Falta só o passo a passo certo: as receitas, a planilha que calcula o seu lucro e o método para vender no boca a boca e no digital.</p>
-      <button type="button" class="btn-primary btn-final" id="btnFinal"></button>
+      <dl class="profile" id="profile" hidden></dl>
+      <button type="button" class="btn-primary btn-final" id="btnFinal">Continuar</button>
       <p class="debug-warning" id="redirectWarning" hidden>
-        ⚠️ Modo debug: configure "redirectUrl" em config.js antes de publicar.
+        Modo debug: o link da campanha ainda não foi configurado em <b>config.js</b> (campo redirectUrl).
       </p>
+      <button type="button" class="btn-link" id="btnRedo">Refazer o quiz</button>
     </div>
   </section>
 
 </main>
 
 <!-- Painel de debug (só aparece com ?debug=1 na URL) -->
-<div id="debugPanel" class="debug-panel" hidden></div>
+<aside class="debug-panel" id="debugPanel" aria-label="Painel de debug" hidden></aside>
 
-<script src="./config.js"></script>
-<script src="./app.js"></script>
 </body>
 </html>
