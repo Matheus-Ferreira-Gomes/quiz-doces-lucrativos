@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Descubra quanto você pode lucrar vendendo doces</title>
+<meta name="description" content="Responda 5 perguntas rápidas e descubra o seu potencial de lucro vendendo doces.">
+
+<!-- Open Graph -->
+<meta property="og:title" content="Descubra quanto você pode lucrar vendendo doces">
+<meta property="og:description" content="Responda 5 perguntas rápidas e receba o seu resultado.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="./images/og-image.webp">
+
+<!-- ===== COLE AQUI A META TAG DE VERIFICAÇÃO DE DOMÍNIO DA META (opcional) ===== -->
+<!-- ===== FIM DA VERIFICAÇÃO ===== -->
+
+<!-- ===== COLE AQUI O CÓDIGO DO PIXEL DO FACEBOOK (opcional) ===== -->
+<!-- ===== FIM DO PIXEL ===== -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar" aria-hidden="true">
+  <div class="progress-fill" id="progressFill"></div>
+</div>
+
+<main class="app" id="app">
+
+  <!-- Tela 0 — Abertura -->
+  <section class="screen active" data-screen="intro" id="screen-intro">
+    <div class="card">
+      <img src="./images/hero-doces.webp" alt="Doces artesanais" class="hero-img" width="320" height="200">
+      <h1>Descubra quanto você pode lucrar vendendo doces</h1>
+      <p class="subtitle">Responda 5 perguntas rápidas e receba o seu resultado</p>
+      <button type="button" class="btn-primary" id="btnStart">Começar agora</button>
+    </div>
+  </section>
+
+  <!-- Perguntas (geradas via template no JS) -->
+  <section class="screen" data-screen="question" id="screen-question">
+    <div class="card">
+      <button type="button" class="btn-back" id="btnBack" aria-label="Voltar para a pergunta anterior">‹ Voltar</button>
+      <h2 id="questionTitle"></h2>
+      <div class="options" id="optionsContainer" role="group"></div>
+    </div>
+  </section>
+
+  <!-- Transição entre perguntas -->
+  <section class="screen" data-screen="transition" id="screen-transition">
+    <div class="card">
+      <p class="transition-text" id="transitionText"></p>
+      <button type="button" class="btn-primary" id="btnContinue">Continuar</button>
+    </div>
+  </section>
+
+  <!-- Carregando -->
+  <section class="screen" data-screen="loading" id="screen-loading">
+    <div class="card card-center">
+      <div class="spinner" aria-hidden="true"></div>
+      <p class="loading-text">Analisando as suas respostas...</p>
+    </div>
+  </section>
+
+  <!-- Resultado final -->
+  <section class="screen" data-screen="result" id="screen-result">
+    <div class="card">
+      <h2>O seu resultado está pronto!</h2>
+      <p class="result-text">Com base nas suas respostas, você tem tudo para transformar os seus doces em uma renda de verdade. Falta só o passo a passo certo: as receitas, a planilha que calcula o seu lucro e o método para vender no boca a boca e no digital.</p>
+      <button type="button" class="btn-primary btn-final" id="btnFinal"></button>
+      <p class="debug-warning" id="redirectWarning" hidden>
+        ⚠️ Modo debug: configure "redirectUrl" em config.js antes de publicar.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<!-- Painel de debug (só aparece com ?debug=1 na URL) -->
+<div id="debugPanel" class="debug-panel" hidden></div>
+
+<script src="./config.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>
