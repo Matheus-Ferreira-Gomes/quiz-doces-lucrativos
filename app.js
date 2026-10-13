@@ -6,8 +6,8 @@
   "use strict";
 
   var CFG = window.QUIZ_CONFIG || {};
-  var STORAGE_KEY = "dl_quiz_v1";
-  var AUTO_ADVANCE_MS = 4000;   // tempo até a transição avançar sozinha
+  var STORAGE_KEY = "dl_quiz_v2";
+  var AUTO_ADVANCE_MS = 4000;   // tempo mínimo até a transição avançar sozinha (textos longos ganham mais tempo)
   var LOADING_MS = 2400;        // duração da tela "Analisando..."
   var LEAD_WAIT_MS = 300;       // espera máxima para o evento Lead sair antes do redirecionamento
   var query = new URLSearchParams(window.location.search);
@@ -16,60 +16,180 @@
   // ----------------------------------------------------------
   // Perguntas
   // ----------------------------------------------------------
-  var QUESTIONS = [
-    {
-      id: "q1",
-      title: "O que mais te move a querer fazer doces para vender?",
+  // Cada pergunta tem:
+  //   param   → nome do parâmetro enviado no link final e no webhook
+  //   title   → texto da pergunta
+  //   options → respostas (label = texto na tela, value = valor enviado,
+  //             reply = mensagem da tela de transição para essa resposta,
+  //             short = texto curto usado no resumo da tela final)
+  //   reply   → mensagem de transição padrão, quando a resposta não tem a sua
+  var Q = {
+    perfil: {
+      param: "perfil",
+      title: "Você já vende doces hoje?",
       options: [
-        { label: "Complementar a minha renda", value: "renda_extra" },
-        { label: "Sair do meu emprego atual", value: "sair_emprego" },
-        { label: "Já vendo, mas quero lucrar mais", value: "ja_vendo" }
-      ],
-      transition: "Que bom te ver aqui! Seja qual for o seu sonho, ele cabe num docinho bem vendido. Bora descobrir o seu potencial?"
+        { label: "Ainda não, quero começar", value: "iniciante", short: "Quero começar a vender",
+          reply: "Que bom que você chegou antes de começar! Quem começa já sabendo o que vende e quanto cobrar evita os erros que fazem muita gente desistir." },
+        { label: "Já vendi algumas vezes, mas sem constância", value: "ocasional", short: "Já vendo, mas sem constância",
+          reply: "Você já deu o primeiro passo, e ele é o mais difícil! Agora é transformar essas vendas soltas numa renda que entra todo mês." },
+        { label: "Sim, já vendo com frequência", value: "vende", short: "Já vendo com frequência",
+          reply: "Que demais! Você já provou que as pessoas compram de você. Agora vamos ver o que falta para esse trabalho virar lucro de verdade." }
+      ]
     },
-    {
-      id: "q2",
-      title: "Hoje, como você se sente com o seu dinheiro no fim do mês?",
+
+    // ----- Caminho: ainda não vende -----
+    motivacao: {
+      param: "motivacao",
+      title: "O que mais te move a querer vender doces?",
       options: [
-        { label: "Sempre falta", value: "sempre_falta" },
-        { label: "Fico no aperto", value: "aperto" },
-        { label: "Sobra pouco", value: "sobra_pouco" }
-      ],
-      transition: "Olha, você não está sozinha nisso. A maioria das mulheres que começam a vender doces sente exatamente isso. E a boa notícia é que dá para mudar."
+        { label: "Complementar a renda da casa", value: "renda_extra",
+          reply: "Uma renda extra muda o mês inteiro: é a conta que fecha e a folga que aparece. E doce é um dos jeitos mais rápidos de chegar lá." },
+        { label: "Ter o meu próprio dinheiro", value: "independencia",
+          reply: "Ter o seu próprio dinheiro, sem depender de ninguém, não tem preço. E dá para conquistar isso trabalhando da sua cozinha." },
+        { label: "Sair do emprego e viver disso", value: "sair_emprego",
+          reply: "Muita gente que hoje vive de doces começou exatamente com esse sonho. Com método e os números certos, ele é bem real." }
+      ]
     },
-    {
-      id: "q3",
-      title: "Você sabe quanto lucra de verdade em cada doce que vende?",
+    desafio_iniciante: {
+      param: "desafio",
+      title: "O que mais te impede de começar hoje?",
       options: [
-        { label: "Não faço ideia", value: "nao_sei" },
-        { label: "Mais ou menos", value: "mais_ou_menos" },
-        { label: "Sei exatamente", value: "sei" }
-      ],
-      transition: "Pois é... esse é o erro que faz muita gente trabalhar muito e ganhar pouco. Quando você sabe seus números, tudo muda de figura."
+        { label: "Não sei quais doces vendem mais", value: "receitas",
+          reply: "Faz todo sentido. Começar com as receitas certas, que vendem e rendem bem, faz toda a diferença logo no primeiro mês." },
+        { label: "Não sei quanto cobrar para ter lucro", value: "preco",
+          reply: "Esse é o erro mais comum: cobrar \"no olho\" e trabalhar de graça sem perceber. Quando você sabe seus números, tudo muda de figura." },
+        { label: "Tenho medo de não ter clientes", value: "clientes",
+          reply: "Esse medo é normal, mas os primeiros clientes costumam estar mais perto do que você imagina: família, vizinhos, trabalho e o seu WhatsApp." }
+      ]
     },
-    {
-      id: "q4",
-      title: "Quanto você gostaria de faturar por mês com os seus doces?",
+
+    // ----- Caminho: vende de vez em quando -----
+    desafio_ocasional: {
+      param: "desafio",
+      title: "O que mais te impede de vender com mais frequência?",
+      options: [
+        { label: "Tenho poucos clientes e encomendas", value: "clientes",
+          reply: "Cliente fiel não aparece por sorte: vem de um jeito certo de divulgar e de fazer a pessoa voltar a comprar. E isso se aprende." },
+        { label: "Não sei se estou tendo lucro", value: "lucro",
+          reply: "Pois é... esse é o erro que faz muita gente trabalhar muito e ganhar pouco. Quando você sabe seus números, tudo muda de figura." },
+        { label: "Falta organização e rotina", value: "organizacao",
+          reply: "Com um cardápio enxuto e uma rotina simples de produção, dá para vender toda semana sem viver dentro da cozinha." }
+      ]
+    },
+    divulgacao: {
+      param: "divulgacao",
+      title: "Como as pessoas ficam sabendo dos seus doces hoje?",
+      options: [
+        { label: "Só no boca a boca", value: "boca_a_boca",
+          reply: "O boca a boca é ouro! E dá para multiplicar ele com o WhatsApp e o Instagram, sem precisar virar blogueira." },
+        { label: "Pelo status e grupos do WhatsApp", value: "whatsapp",
+          reply: "Ótimo começo! Com as fotos e mensagens certas, o seu status vira uma vitrine que vende todos os dias." },
+        { label: "Também pelo Instagram", value: "instagram",
+          reply: "Você já está no digital, e isso é uma vantagem enorme. Agora é fazer esse perfil trazer encomendas de verdade." }
+      ]
+    },
+
+    // ----- Caminho: já vende com frequência -----
+    faturamento: {
+      param: "faturamento_atual",
+      title: "Quanto você fatura hoje, por mês, com doces?",
       options: [
         { label: "Até R$ 1.000", value: "ate_1000" },
         { label: "De R$ 1.000 a R$ 3.000", value: "1000_3000" },
         { label: "Mais de R$ 3.000", value: "mais_3000" }
       ],
-      transition: "Esse valor é totalmente possível. Milhares já chegaram lá vendendo no boca a boca e no digital, e você também pode."
+      reply: "Anotado! Esse é o seu ponto de partida. Agora vamos entender o que está segurando o seu crescimento."
     },
-    {
-      id: "q5",
+    desafio_vende: {
+      param: "desafio",
+      title: "Qual é o seu maior desafio hoje?",
+      options: [
+        { label: "Trabalho muito e sobra pouco lucro", value: "lucro",
+          reply: "Pois é... esse é o erro que faz muita gente trabalhar muito e ganhar pouco. Quando você sabe seus números, tudo muda de figura." },
+        { label: "Quero mais clientes e encomendas", value: "clientes",
+          reply: "Você já tem quem compra. Com o método certo, esses clientes voltam sempre e ainda indicam outros." },
+        { label: "Vender mais pelo Instagram e WhatsApp", value: "digital",
+          reply: "O digital é onde está o seu próximo salto. Com as estratégias certas, as encomendas passam a chegar até você." }
+      ]
+    },
+    meta_vende: {
+      param: "meta",
+      title: "E aonde você quer chegar nos próximos meses?",
+      // As opções dependem de quanto a pessoa já fatura: a meta é sempre maior que o atual
+      options: function (answers) {
+        var porFaturamento = {
+          ate_1000: [["De R$ 1.000 a R$ 3.000", "1000_3000"], ["De R$ 3.000 a R$ 5.000", "3000_5000"], ["Mais de R$ 5.000", "mais_5000"]],
+          "1000_3000": [["De R$ 3.000 a R$ 5.000", "3000_5000"], ["De R$ 5.000 a R$ 10.000", "5000_10000"], ["Mais de R$ 10.000", "mais_10000"]],
+          mais_3000: [["De R$ 5.000 a R$ 10.000", "5000_10000"], ["De R$ 10.000 a R$ 20.000", "10000_20000"], ["Mais de R$ 20.000", "mais_20000"]]
+        };
+        return (porFaturamento[answers.faturamento] || porFaturamento.ate_1000).map(function (o) {
+          return { label: o[0] + " por mês", value: o[1] };
+        });
+      },
+      reply: "Ótima meta! Quem já vende e acerta o preço e a divulgação costuma crescer rápido. Você está no caminho certo."
+    },
+
+    // ----- Perguntas comuns aos caminhos -----
+    meta: {
+      param: "meta",
+      title: "Quanto você gostaria de faturar por mês com os seus doces?",
+      options: [
+        { label: "Até R$ 1.000 por mês", value: "ate_1000" },
+        { label: "De R$ 1.000 a R$ 3.000 por mês", value: "1000_3000" },
+        { label: "Mais de R$ 3.000 por mês", value: "mais_3000" }
+      ],
+      reply: "Esse valor é totalmente possível. Milhares já chegaram lá vendendo no boca a boca e no digital, e você também pode."
+    },
+    momento: {
+      param: "momento",
       title: "Se existisse um passo a passo completo para você lucrar de verdade, você estaria pronta para começar agora?",
       options: [
-        { label: "Sim, quero começar agora", value: "agora" },
-        { label: "Quero, mas tenho dúvidas", value: "duvidas" },
-        { label: "Só estou pesquisando", value: "pesquisando" }
-      ],
-      transition: "Perfeito! Então você está a um passo de transformar os seus doces numa renda de verdade. Vou te conectar agora com alguém que vai te mostrar exatamente como."
+        { label: "Sim, quero começar agora", value: "agora",
+          reply: "Perfeito! Então você está a um passo de transformar os seus doces numa renda de verdade. Vou te conectar agora com alguém que vai te mostrar exatamente como." },
+        { label: "Quero, mas tenho dúvidas", value: "duvidas",
+          reply: "É super normal ter dúvidas antes de começar. Vou te conectar com alguém que vai tirar todas elas e te mostrar o caminho." },
+        { label: "Só estou pesquisando", value: "pesquisando",
+          reply: "Tudo bem! Pesquisar antes mostra que você leva isso a sério. Vou te mostrar como funciona, e você decide com calma." }
+      ]
     }
-  ];
+  };
+  Object.keys(Q).forEach(function (key) { Q[key].key = key; });
+
+  // Sequência de perguntas de cada perfil (definido pela 1ª resposta)
+  var FLOWS = {
+    iniciante: [Q.perfil, Q.motivacao, Q.desafio_iniciante, Q.meta, Q.momento],
+    ocasional: [Q.perfil, Q.desafio_ocasional, Q.divulgacao, Q.meta, Q.momento],
+    vende: [Q.perfil, Q.faturamento, Q.desafio_vende, Q.meta_vende, Q.momento]
+  };
+  var TOTAL = 5;
+
+  // Texto da tela final de cada perfil
+  var RESULT_TEXT = {
+    iniciante: "Você está no momento perfeito para começar do jeito certo. Com as receitas que mais vendem, a planilha que calcula o seu lucro e o método para vender no boca a boca e no digital, os seus primeiros doces já saem dando lucro.",
+    ocasional: "Você já sabe que as pessoas compram os seus doces. Falta transformar as vendas soltas em rotina: as receitas certas, a planilha que calcula o seu lucro e o método para vender todo mês, no boca a boca e no digital.",
+    vende: "Você já tem o mais difícil: clientes. Agora é fazer cada doce dar lucro de verdade, com a planilha que calcula o seu preço certo, receitas que rendem mais e o método para vender ainda mais no boca a boca e no digital."
+  };
 
   var TEMPERATURA = { agora: "quente", duvidas: "morno", pesquisando: "frio" };
+
+  function getFlow() { return FLOWS[state.answers.perfil] || FLOWS.iniciante; }
+  function optionsFor(q) { return typeof q.options === "function" ? q.options(state.answers) : q.options; }
+  function chosenOption(q) {
+    var value = state.answers[q.key];
+    return optionsFor(q).filter(function (o) { return o.value === value; })[0] || null;
+  }
+
+  // Respostas do caminho atual, com os nomes de parâmetro (perfil, desafio, meta...)
+  function answeredParams() {
+    var out = {};
+    getFlow().forEach(function (q) { if (state.answers[q.key]) out[q.param] = state.answers[q.key]; });
+    return out;
+  }
+  function answeredLabels() {
+    var out = {};
+    getFlow().forEach(function (q) { var o = chosenOption(q); if (o) out[q.param] = o.label; });
+    return out;
+  }
 
   // ----------------------------------------------------------
   // Estado salvo no navegador (permite retomar de onde parou)
@@ -84,7 +204,7 @@
   var state = loadState();
   state.answers = state.answers || {};
   state.tracking = state.tracking || {};
-  state.step = typeof state.step === "number" ? Math.max(0, Math.min(state.step, QUESTIONS.length)) : 0;
+  state.step = typeof state.step === "number" ? Math.max(0, Math.min(state.step, TOTAL)) : 0;
   state.leadId = state.leadId || generateLeadId();
 
   function nowIso() { return new Date().toISOString(); }
@@ -239,7 +359,8 @@
     add("fbp", getFbp());
 
     if (CFG.sendAnswersInUrl) {
-      QUESTIONS.forEach(function (q) { add(q.id, state.answers[q.id]); });
+      var answers = answeredParams();
+      Object.keys(answers).forEach(function (key) { add(key, answers[key]); });
       add("temperatura", getTemperatura());
     }
 
@@ -259,13 +380,7 @@
     }
   }
 
-  function getTemperatura() { return TEMPERATURA[state.answers.q5] || ""; }
-
-  function labelFor(questionId) {
-    var q = QUESTIONS.filter(function (x) { return x.id === questionId; })[0];
-    var opt = q && q.options.filter(function (o) { return o.value === state.answers[questionId]; })[0];
-    return opt ? opt.label : "";
-  }
+  function getTemperatura() { return TEMPERATURA[state.answers.momento] || ""; }
 
   // ----------------------------------------------------------
   // 3. Webhook (opcional)
@@ -277,10 +392,12 @@
     var endpoint = String(CFG.webhookUrl || "").trim();
     if (!endpoint) return;
 
+    var answers = answeredParams();
     var data = {
       lead_id: state.leadId,
       temperatura: getTemperatura(),
-      answers: state.answers,
+      answers: answers,
+      answer_labels: answeredLabels(),
       params: state.tracking,
       fbc: getFbc(),
       fbp: getFbp(),
@@ -295,8 +412,9 @@
       clicked_at: state.clickedAt || ""
     };
 
-    var flat = Object.assign({}, state.tracking, state.answers, data);
+    var flat = Object.assign({}, state.tracking, answers, data);
     delete flat.answers;
+    delete flat.answer_labels;
     delete flat.params;
 
     var form = new URLSearchParams();
@@ -354,18 +472,17 @@
   }
 
   function updateProgress() {
-    var total = QUESTIONS.length;
-    var done = { intro: 0, question: state.step + 1, transition: state.step, loading: total, result: total }[currentScreen];
-    $("progressFill").style.width = (done / total) * 100 + "%";
+    var done = { intro: 0, question: state.step + 1, transition: state.step, loading: TOTAL, result: TOTAL }[currentScreen];
+    $("progressFill").style.width = (done / TOTAL) * 100 + "%";
     $("topbar").classList.toggle("visible", currentScreen !== "intro");
   }
 
   // ---------- Abertura ----------
   function setupIntro() {
-    var resuming = state.step > 0 && state.step < QUESTIONS.length;
+    var resuming = state.step > 0 && state.step < TOTAL;
     $("btnStart").textContent = resuming ? "Continuar de onde parei" : "Começar agora";
     $("resumeNote").hidden = !resuming;
-    $("resumeNote").textContent = "Você já respondeu " + state.step + " de " + QUESTIONS.length + " perguntas.";
+    $("resumeNote").textContent = "Você já respondeu " + state.step + " de " + TOTAL + " perguntas.";
     $("btnRestart").hidden = !resuming;
   }
 
@@ -375,7 +492,7 @@
       saveState();
       track("QuizStart", {}, null, true);
     }
-    if (state.step >= QUESTIONS.length) showLoading();
+    if (state.step >= TOTAL) showLoading();
     else renderQuestion(state.step);
   }
 
@@ -391,22 +508,22 @@
 
   // ---------- Perguntas ----------
   function renderQuestion(index) {
-    var q = QUESTIONS[index];
+    var q = getFlow()[index];
     state.step = index;
     saveState();
 
     $("questionTitle").textContent = q.title;
-    $("stepLabel").textContent = "Pergunta " + (index + 1) + " de " + QUESTIONS.length;
+    $("stepLabel").textContent = "Pergunta " + (index + 1) + " de " + TOTAL;
 
     var box = $("options");
     box.textContent = "";
     box.classList.remove("locked");
-    q.options.forEach(function (opt) {
+    optionsFor(q).forEach(function (opt) {
       var b = document.createElement("button");
       b.type = "button";
       b.className = "option";
       b.textContent = opt.label;
-      b.setAttribute("aria-pressed", String(state.answers[q.id] === opt.value));
+      b.setAttribute("aria-pressed", String(state.answers[q.key] === opt.value));
       b.addEventListener("click", guard(function () { selectOption(index, opt.value, b); }));
       box.appendChild(b);
     });
@@ -424,25 +541,40 @@
   }
 
   function answer(index, value) {
-    var q = QUESTIONS[index];
-    state.answers[q.id] = value;
+    var flow = getFlow();
+    var q = flow[index];
+
+    // Mudou a resposta? As perguntas seguintes podem ter mudado (outro caminho
+    // ou outras opções), então as respostas posteriores são descartadas.
+    if (state.answers[q.key] !== value) {
+      var keep = {};
+      flow.slice(0, index).forEach(function (x) {
+        if (state.answers[x.key]) keep[x.key] = state.answers[x.key];
+      });
+      state.answers = keep;
+    }
+    state.answers[q.key] = value;
     state.step = index + 1;
     saveState();
 
-    track("QuizStep", { step: index + 1, pergunta: q.id, resposta: value }, null, true);
+    track("QuizStep", { step: index + 1, pergunta: q.param, resposta: value, perfil: state.answers.perfil }, null, true);
 
-    $("transitionText").textContent = q.transition;
+    var reply = (chosenOption(q) || {}).reply || q.reply || "";
+    $("transitionText").textContent = reply;
     show("transition");
 
+    // Textos mais longos ficam mais tempo na tela (~230ms por palavra, entre 4s e 7s)
+    var ms = Math.min(7000, Math.max(AUTO_ADVANCE_MS, reply.split(/\s+/).length * 230));
     var btn = $("btnContinue");
+    btn.style.setProperty("--countdown", ms + "ms");
     btn.classList.remove("counting");
     void btn.offsetWidth; // reinicia a animação da barrinha de contagem
     btn.classList.add("counting");
-    autoTimer = setTimeout(advance, AUTO_ADVANCE_MS);
+    autoTimer = setTimeout(advance, ms);
   }
 
   function advance() {
-    if (state.step >= QUESTIONS.length) showLoading();
+    if (state.step >= TOTAL) showLoading();
     else renderQuestion(state.step);
   }
 
@@ -466,15 +598,24 @@
         state.completedAt = nowIso();
         saveState();
       }
-      track("QuizComplete", { temperatura: getTemperatura() }, null, true);
+      track("QuizComplete", { temperatura: getTemperatura(), perfil: state.answers.perfil }, null, true);
       renderResult();
     }, LOADING_MS);
   }
 
   function renderResult(moveFocus) {
+    $("resultText").textContent = RESULT_TEXT[state.answers.perfil] || RESULT_TEXT.iniciante;
+
+    // Resumo do perfil: momento, maior desafio e meta
+    var labelOf = function (param) {
+      var q = getFlow().filter(function (x) { return x.param === param; })[0];
+      var o = q && chosenOption(q);
+      return o ? (o.short || o.label) : "";
+    };
     var rows = [
-      ["O que te move", labelFor("q1")],
-      ["Sua meta de faturamento", labelFor("q4") && labelFor("q4") + " por mês"]
+      ["Seu momento", labelOf("perfil")],
+      ["Seu maior desafio", labelOf("desafio")],
+      ["Sua meta", labelOf("meta")]
     ].filter(function (r) { return r[1]; });
 
     var profile = $("profile");
@@ -517,7 +658,7 @@
     saveState();
 
     // eventID = lead_id para a Meta deduplicar com a API de Conversões
-    track("Lead", { temperatura: getTemperatura(), content_name: "Quiz Doces Lucrativos" }, { eventID: state.leadId });
+    track("Lead", { temperatura: getTemperatura(), perfil: state.answers.perfil, content_name: "Quiz Doces Lucrativos" }, { eventID: state.leadId });
     sendWebhook(finalUrl);
 
     if (DEBUG) {
@@ -610,13 +751,13 @@
     rows.push(
       ["URL final que seria aberta", previewUrl(), "url"],
       ["lead_id", state.leadId],
-      ["temperatura", getTemperatura() || "(responda a pergunta 5)"],
+      ["temperatura", getTemperatura() || "(responda a última pergunta)"],
       ["Pixel", pixelMode],
       ["fbc", getFbc() || "(nenhum: só existe quando chega fbclid na URL)"],
       ["fbp", getFbp() || "(nenhum: o cookie _fbp é criado pelo pixel)"],
       ["Parâmetros capturados (first touch)", JSON.stringify(state.tracking, null, 2)],
       ["URL de entrada", state.landingUrl || ""],
-      ["Respostas", JSON.stringify(state.answers, null, 2)],
+      ["Respostas", JSON.stringify(answeredLabels(), null, 2)],
       ["Eventos disparados", eventLog.join("\n") || "(nenhum ainda)"]
     );
 
@@ -700,7 +841,7 @@
   window.addEventListener("pageshow", function (e) { if (e.persisted) resetFinalButton(); });
 
   // Retomar de onde parou
-  if (state.step >= QUESTIONS.length) {
+  if (state.step >= TOTAL) {
     renderResult(false);
   } else {
     setupIntro();

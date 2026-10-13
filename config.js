@@ -15,14 +15,16 @@ window.QUIZ_CONFIG = {
   // Deixe vazio ("") para desativar o carregamento automático do pixel.
   metaPixelId: "",
 
-  // Repassar as respostas do quiz (q1..q5 e temperatura) como parâmetros
-  // na URL final? true = sim, false = não.
+  // Repassar as respostas do quiz como parâmetros na URL final?
+  // (perfil, motivacao, desafio, divulgacao, faturamento_atual, meta, momento e temperatura)
+  // true = sim, false = não.
   sendAnswersInUrl: true,
 
   // Opcional: URL que recebe os dados completos do lead via POST
   // (ex: um webhook do n8n, Make, ou da sua plataforma de automação).
-  // Os dados chegam como campos de formulário (lead_id, temperatura, q1..q5,
-  // utm_*, fbc, fbp...) e também todos juntos no campo "json".
+  // Os dados chegam como campos de formulário (lead_id, temperatura, perfil,
+  // desafio, meta, utm_*, fbc, fbp...) e também todos juntos no campo "json",
+  // que inclui o texto de cada resposta (answer_labels).
   // Deixe vazio ("") para desativar.
   webhookUrl: ""
 };

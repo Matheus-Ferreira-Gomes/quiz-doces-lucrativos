@@ -22,7 +22,7 @@ mexer em **um arquivo: `config.js`**.
    ```js
    redirectUrl: "https://wa.me/5511999999999",
    ```
-4. Salve e publique a alteração (seção 6).
+4. Salve e publique a alteração (seção 7).
 
 **Pode deixar parâmetros no seu link** (ex.: `?origem=quiz`). O quiz não apaga
 nada: se o mesmo parâmetro existir no seu link e na URL do anúncio, **o do seu
@@ -38,25 +38,51 @@ de configurar.
 |---|---|
 | `buttonText` | Texto do botão final. |
 | `metaPixelId` | Número do seu Pixel do Facebook (só números). Deixe `""` se não usar. |
-| `sendAnswersInUrl` | `true` = manda as respostas (q1 a q5) e a `temperatura` no link final. `false` = não manda. |
+| `sendAnswersInUrl` | `true` = manda as respostas e a `temperatura` no link final. `false` = não manda. |
 | `webhookUrl` | Endereço de uma automação (n8n, Make, Zapier...) que recebe os dados do lead. Deixe `""` se não usar. |
 
 ---
 
-## 2. O que vai no link final
+## 2. As perguntas: cada pessoa segue um caminho
 
-Exemplo de como o link sai no final:
+A 1ª pergunta ("Você já vende doces hoje?") define o caminho. Assim ninguém
+recebe pergunta que não faz sentido para o seu momento. Todos os caminhos
+têm 5 perguntas.
+
+| | Ainda não vende (`iniciante`) | Vende às vezes (`ocasional`) | Já vende sempre (`vende`) |
+|---|---|---|---|
+| 2 | O que te move? (`motivacao`) | O que te impede de vender mais? (`desafio`) | Quanto fatura hoje? (`faturamento_atual`) |
+| 3 | O que te impede de começar? (`desafio`) | Como divulga hoje? (`divulgacao`) | Maior desafio hoje? (`desafio`) |
+| 4 | Meta de faturamento (`meta`) | Meta de faturamento (`meta`) | Meta, com opções **acima do que já fatura** (`meta`) |
+| 5 | Pronta para começar agora? (`momento`) | igual | igual |
+
+Cada resposta tem a sua própria mensagem na tela de transição, e a tela final
+muda conforme o perfil. Se a pessoa voltar e trocar uma resposta, as respostas
+seguintes são descartadas e ela segue o caminho novo.
+
+## 3. O que vai no link final
+
+Exemplo de link final de uma pessoa que já vende:
 
 ```
-https://seu-link.com/?lead_id=DL-7K2Q9&fbc=fb.1.1712...&q1=renda_extra&...&temperatura=quente&fbclid=...&utm_source=facebook&utm_campaign=...
+https://seu-link.com/?lead_id=DL-7K2Q9&fbc=fb.1.1712...&perfil=vende&faturamento_atual=1000_3000&desafio=clientes&meta=3000_5000&momento=agora&temperatura=quente&fbclid=...&utm_source=facebook
 ```
 
 - **lead_id**: código único da pessoa (ex.: `DL-7K2Q9`). O mesmo código vai no
   evento Lead do pixel, para a Meta não contar a mesma conversão duas vezes.
 - **fbc / fbp**: identificadores do Facebook, que melhoram a atribuição das vendas.
-- **q1 a q5**: respostas do quiz.
-- **temperatura**: `quente` (quer começar agora), `morno` (tem dúvidas) ou
-  `frio` (só pesquisando).
+- **perfil**: `iniciante`, `ocasional` ou `vende`.
+- **desafio**: a maior dor da pessoa. Vem em todos os caminhos. Valores
+  possíveis: `receitas`, `preco`, `clientes`, `lucro`, `organizacao`, `digital`.
+- **meta**: quanto ela quer faturar por mês (ex.: `1000_3000` = de R$ 1.000 a
+  R$ 3.000).
+- **motivacao**, **divulgacao**, **faturamento_atual**: só aparecem no caminho
+  em que são perguntadas.
+- **momento** e **temperatura**: `agora` = `quente`, `duvidas` = `morno`,
+  `pesquisando` = `frio`.
+
+Com isso o seu atendimento já sabe, antes do "oi", em que momento a pessoa
+está e qual é a dor dela.
 - **Todos os parâmetros que vieram do anúncio** (fbclid, utm_*, campaign_id,
   adset_id, ad_id, ctwa_clid, gclid... qualquer um).
 
@@ -66,7 +92,7 @@ os dados originais continuam valendo.
 
 ---
 
-## 3. Instalar o Pixel do Facebook
+## 4. Instalar o Pixel do Facebook
 
 Escolha **uma** das duas formas.
 
@@ -91,17 +117,17 @@ nada.
 |---|---|
 | `PageView` | Ao abrir o quiz. |
 | `QuizStart` (personalizado) | Ao tocar em "Começar agora". |
-| `QuizStep` (personalizado) | A cada resposta, com o número da etapa e a resposta escolhida. |
-| `QuizComplete` (personalizado) | Ao chegar na tela de resultado, com a temperatura. |
-| `Lead` | Ao tocar no botão final, com a temperatura. |
+| `QuizStep` (personalizado) | A cada resposta, com a etapa, a pergunta, a resposta e o perfil. |
+| `QuizComplete` (personalizado) | Ao chegar na tela de resultado, com a temperatura e o perfil. |
+| `Lead` | Ao tocar no botão final, com a temperatura e o perfil. |
 
 Com esses eventos você pode, por exemplo, criar no Gerenciador de Anúncios
-públicos de quem respondeu "quero começar agora" ou de quem terminou o quiz
-mas não clicou no botão final.
+públicos de quem já vende e está "quente", ou de quem terminou o quiz mas
+não clicou no botão final.
 
 ---
 
-## 4. Colar a meta tag de verificação de domínio da Meta
+## 5. Colar a meta tag de verificação de domínio da Meta
 
 Só é necessário quando o quiz estiver no seu domínio próprio (Etapa 3).
 
@@ -115,7 +141,7 @@ Só é necessário quando o quiz estiver no seu domínio próprio (Etapa 3).
 
 ---
 
-## 5. Testar (modo debug)
+## 6. Testar (modo debug)
 
 Coloque `?debug=1` no final do endereço do quiz, por exemplo:
 ```
@@ -139,7 +165,7 @@ Para rodar no seu computador, abra o terminal na pasta do site e rode
 
 ---
 
-## 6. Publicar alterações (depois que o site estiver no GitHub)
+## 7. Publicar alterações (depois que o site estiver no GitHub)
 
 O jeito mais fácil, sem terminal:
 
@@ -152,7 +178,7 @@ O jeito mais fácil, sem terminal:
 
 ---
 
-## 7. Trocar as imagens
+## 8. Trocar as imagens
 
 Na pasta `images/`:
 
@@ -178,5 +204,8 @@ Mantenha os mesmos nomes de arquivo e substitua os atuais.
 | `404.html` | Página mostrada quando alguém acessa um endereço que não existe. |
 | `.nojekyll` | Arquivo técnico vazio para o GitHub Pages. Não apague. |
 
-Para mudar textos das perguntas, procure o trecho `QUESTIONS` no começo do
-`app.js`. Altere só o texto entre aspas e mantenha as aspas e as vírgulas.
+Para mudar textos das perguntas, respostas ou transições, procure o trecho
+`var Q = {` no começo do `app.js` (os textos da tela final ficam logo abaixo,
+em `RESULT_TEXT`). Altere só o texto entre aspas e mantenha as aspas e as
+vírgulas. Não mude os campos `value` e `param`, que são os valores que o seu
+atendimento e as suas automações recebem.
