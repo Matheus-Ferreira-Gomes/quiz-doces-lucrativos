@@ -94,22 +94,19 @@ os dados originais continuam valendo.
 
 ## 4. Instalar o Pixel do Facebook
 
-Escolha **uma** das duas formas.
-
-**Forma simples, só pelo ID.** No `config.js`:
+Basta colocar o ID do pixel no `config.js`. Não precisa colar código no HTML:
 ```js
 metaPixelId: "123456789012345",
 ```
 
-**Forma completa, colando o código.** Se você copiou o "código base" do pixel
-no Gerenciador de Eventos (o bloco grande que começa com `<script>`), abra o
-`index.html` e cole entre estas duas linhas:
-```html
-<!-- ===== COLE AQUI O CÓDIGO DO PIXEL DO FACEBOOK (opcional) ===== -->
-<!-- ===== FIM DO PIXEL ===== -->
-```
-Se você fizer as duas coisas por engano, tudo bem: o quiz percebe e não duplica
-nada.
+Para não atrasar a abertura no celular, o script da Meta (cerca de 200 KB) só
+carrega no **primeiro toque** da pessoa ou depois de **2,5 segundos**. Os
+eventos disparados antes disso ficam numa fila e são enviados assim que o
+script carrega, então nada se perde.
+
+Se um dia precisar colar o "código base" completo do pixel (por exemplo, para
+correspondência avançada manual), cole no `<head>` do `index.html` e deixe o
+`metaPixelId` vazio. O quiz percebe o código colado e não duplica nada.
 
 **Eventos enviados para a Meta:**
 
@@ -180,15 +177,23 @@ O jeito mais fácil, sem terminal:
 
 ## 8. Trocar as imagens
 
-Na pasta `images/`:
+Todas as imagens saem da mesma arte (`hero-doces.png`, quadrada). Na pasta `images/`:
 
-- `hero-doces.webp`: foto da tela inicial. Use proporção 16:10, por exemplo
-  1280×800 (pode ser menor). Formato **WebP** para manter o site rápido. Dá
-  para converter grátis em squoosh.app.
-- `og-image.jpg`: imagem que aparece quando o link é compartilhado no
-  WhatsApp/Facebook. Tamanho **1200×630**, formato **JPG**.
+| Arquivo | Uso | Tamanho |
+|---|---|---|
+| `hero-doces.webp` | Imagem da tela inicial (a que o celular baixa) | 640×640, ~30 KB |
+| `hero-doces.png` | Reserva para navegadores antigos e imagem do link compartilhado (WhatsApp/Facebook) | 640×640, ~160 KB |
+| `favicon-32.png` | Ícone da aba do navegador (recorte dos brigadeiros) | 32×32 |
+| `apple-touch-icon.png` | Ícone ao salvar o site na tela do iPhone | 180×180 |
 
-Mantenha os mesmos nomes de arquivo e substitua os atuais.
+O original em alta resolução está guardado em `hero-doces-original.png`, na
+pasta acima de `site/`, fora do site publicado.
+
+**Para trocar a arte:** substitua os arquivos mantendo os mesmos nomes. Use
+imagem quadrada, de 640×640 ou maior. Para gerar o `.webp`, use o
+squoosh.app (grátis): abra a imagem, escolha WebP, qualidade 80, e baixe. Não
+suba imagens de quase 1 MB, que deixam o quiz lento no 4G. Se preferir, me
+peça e eu gero todas as versões.
 
 ---
 
@@ -197,7 +202,7 @@ Mantenha os mesmos nomes de arquivo e substitua os atuais.
 | Arquivo | O que é |
 |---|---|
 | `config.js` | **Suas configurações.** É o único que você precisa editar. |
-| `index.html` | Estrutura das telas e os espaços para colar pixel e meta tag. |
+| `index.html` | Estrutura das telas e o espaço para colar a meta tag de verificação. |
 | `style.css` | Visual: cores, fontes, tamanhos. |
 | `app.js` | Lógica do quiz, rastreamento, pixel e webhook. Não precisa mexer. |
 | `images/` | Imagens. |

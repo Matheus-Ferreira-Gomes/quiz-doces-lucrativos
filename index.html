@@ -7,18 +7,24 @@
 <meta name="description" content="Responda 5 perguntas rápidas e descubra o seu potencial de lucro vendendo doces.">
 <meta name="theme-color" content="#fff6ef">
 <meta name="format-detection" content="telephone=no">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='17' r='13' fill='%235c3a2e'/%3E%3Crect x='10' y='10' width='3' height='1.6' rx='.8' fill='%23f6a6c1' transform='rotate(30 11 11)'/%3E%3Crect x='18' y='12' width='3' height='1.6' rx='.8' fill='%23fff6ef' transform='rotate(-25 19 13)'/%3E%3Crect x='13' y='19' width='3' height='1.6' rx='.8' fill='%23f6a6c1' transform='rotate(60 14 20)'/%3E%3Crect x='20' y='20' width='3' height='1.6' rx='.8' fill='%23fff6ef'/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" sizes="32x32" href="./images/favicon-32.png">
+<link rel="apple-touch-icon" href="./images/apple-touch-icon.png">
 
 <!-- Open Graph (aparência do link quando compartilhado) -->
-<!-- Na Etapa 3 o og:image vira um endereço completo (https://...), que é o que o Facebook e o WhatsApp exigem -->
+<!-- og:image precisa ser um endereço completo (https://...). Na Etapa 3 troca para o domínio próprio. -->
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:title" content="Descubra quanto você pode lucrar vendendo doces">
 <meta property="og:description" content="Responda 5 perguntas rápidas e receba o seu resultado.">
-<meta property="og:image" content="./images/og-image.jpg">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
+<meta property="og:image" content="https://matheus-ferreira-gomes.github.io/quiz-doces-lucrativos/images/hero-doces.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="640">
+<meta property="og:image:height" content="640">
+<meta property="og:image:alt" content="Brigadeiros Doces Lucrativos">
+<meta name="twitter:card" content="summary">
+
+<!-- Imagem da tela inicial começa a baixar junto com o HTML -->
+<link rel="preload" as="image" href="./images/hero-doces.webp" type="image/webp" fetchpriority="high">
 
 <!-- ===== COLE AQUI A META TAG DE VERIFICAÇÃO DE DOMÍNIO DA META (opcional) ===== -->
 <!-- ===== FIM DA VERIFICAÇÃO ===== -->
@@ -44,8 +50,10 @@
   <!-- Tela 0 — Abertura -->
   <section class="screen active" id="screen-intro">
     <div class="card">
-      <p class="brand">Doces Lucrativos</p>
-      <img src="./images/hero-doces.webp" alt="Mesa com doces artesanais" class="hero-img" width="640" height="400" fetchpriority="high" decoding="async">
+      <picture>
+        <source srcset="./images/hero-doces.webp" type="image/webp">
+        <img src="./images/hero-doces.png" alt="Doces Lucrativos: prato com brigadeiros" class="hero-img" width="640" height="640" fetchpriority="high" decoding="async">
+      </picture>
       <h1 tabindex="-1">Descubra quanto você pode lucrar vendendo doces</h1>
       <p class="subtitle">Responda 5 perguntas rápidas e receba o seu resultado</p>
       <p class="resume-note" id="resumeNote" hidden></p>

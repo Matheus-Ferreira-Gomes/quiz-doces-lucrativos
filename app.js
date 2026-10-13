@@ -327,14 +327,22 @@
     n("init", id);
     track("PageView");
 
-    // Carrega o script da Meta só depois da página pronta, para não atrasar a abertura
+    // O script da Meta (~200 KB) só carrega no 1º toque ou após 2,5s, para não
+    // atrasar a abertura no celular. Até lá os eventos ficam na fila e não se perdem.
+    let injected = false;
+    const triggers = ["pointerdown", "keydown", "scroll"];
     const inject = () => {
+      if (injected) return;
+      injected = true;
+      triggers.forEach((ev) => window.removeEventListener(ev, inject));
       const s = document.createElement("script");
       s.async = true;
       s.src = "https://connect.facebook.net/en_US/fbevents.js";
       document.head.appendChild(s);
     };
-    if (document.readyState === "complete") inject(); else window.addEventListener("load", inject);
+    triggers.forEach((ev) => window.addEventListener(ev, inject, { once: true, passive: true }));
+    const scheduleFallback = () => setTimeout(inject, 2500);
+    if (document.readyState === "complete") scheduleFallback(); else window.addEventListener("load", scheduleFallback);
   };
 
   // ----------------------------------------------------------
