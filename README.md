@@ -1,6 +1,6 @@
 # Quiz Doces Lucrativos
 
-Quiz de 5 perguntas que fica entre o seu anúncio (Meta Ads) e o link da sua
+Quiz de 6 perguntas que fica entre o seu anúncio (Meta Ads) e o link da sua
 campanha. A pessoa clica no anúncio, responde às perguntas e no final é
 levada para o seu link, que recebe junto todos os dados de rastreamento que
 vieram na URL (fbclid, utm_*, ids de campanha etc.).
@@ -47,14 +47,15 @@ de configurar.
 
 A 1ª pergunta ("Você já vende doces hoje?") define o caminho. Assim ninguém
 recebe pergunta que não faz sentido para o seu momento. Todos os caminhos
-têm 5 perguntas.
+têm 6 perguntas.
 
 | | Ainda não vende (`iniciante`) | Vende às vezes (`ocasional`) | Já vende sempre (`vende`) |
 |---|---|---|---|
 | 2 | O que te move? (`motivacao`) | O que te impede de vender mais? (`desafio`) | Quanto fatura hoje? (`faturamento_atual`) |
 | 3 | O que te impede de começar? (`desafio`) | Como divulga hoje? (`divulgacao`) | Maior desafio hoje? (`desafio`) |
 | 4 | Meta de faturamento (`meta`) | Meta de faturamento (`meta`) | Meta, com opções **acima do que já fatura** (`meta`) |
-| 5 | Pronta para começar agora? (`momento`) | igual | igual |
+| 5 | Quanto teria para investir? (`orcamento`) | igual | igual |
+| 6 | Pronta para começar agora? (`momento`) | igual | igual |
 
 Cada resposta tem a sua própria mensagem na tela de transição, e a tela final
 muda conforme o perfil. Se a pessoa voltar e trocar uma resposta, as respostas
@@ -65,7 +66,7 @@ seguintes são descartadas e ela segue o caminho novo.
 Exemplo de link final de uma pessoa que já vende:
 
 ```
-https://seu-link.com/?lead_id=DL-7K2Q9&fbc=fb.1.1712...&perfil=vende&faturamento_atual=1000_3000&desafio=clientes&meta=3000_5000&momento=agora&temperatura=quente&fbclid=...&utm_source=facebook
+https://seu-link.com/?lead_id=DL-7K2Q9&fbc=fb.1.1712...&perfil=vende&faturamento_atual=1000_3000&desafio=clientes&meta=3000_5000&orcamento=medio&momento=agora&temperatura=quente&fbclid=...&utm_source=facebook
 ```
 
 - **lead_id**: código único da pessoa (ex.: `DL-7K2Q9`). O mesmo código vai no
@@ -76,6 +77,10 @@ https://seu-link.com/?lead_id=DL-7K2Q9&fbc=fb.1.1712...&perfil=vende&faturamento
   possíveis: `receitas`, `preco`, `clientes`, `lucro`, `organizacao`, `digital`.
 - **meta**: quanto ela quer faturar por mês (ex.: `1000_3000` = de R$ 1.000 a
   R$ 3.000).
+- **orcamento**: quanto a pessoa teria para investir agora. Vem em todos os
+  caminhos: `nenhum` (só pesquisando), `baixo` (até R$ 50), `medio` (de R$ 50
+  a R$ 150) ou `alto` (mais de R$ 150). Com a oferta a R$ 57, `medio` e `alto`
+  são os leads que podem comprar agora.
 - **motivacao**, **divulgacao**, **faturamento_atual**: só aparecem no caminho
   em que são perguntadas.
 - **momento** e **temperatura**: `agora` = `quente`, `duvidas` = `morno`,

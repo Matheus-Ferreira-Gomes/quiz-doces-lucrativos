@@ -139,6 +139,20 @@
       ],
       reply: "Esse valor é totalmente possível. Milhares já chegaram lá vendendo no boca a boca e no digital, e você também pode."
     },
+    orcamento: {
+      param: "orcamento",
+      title: "Hoje, se decidisse resolver isso de vez, quanto você teria disponível pra investir no seu negócio?",
+      options: [
+        { label: "Nada agora, só pesquisando", value: "nenhum",
+          reply: "Sem problema! Vou te mostrar como funciona, e você decide com calma quando fizer sentido pra sua realidade." },
+        { label: "Até R$ 50", value: "baixo",
+          reply: "Anotado! Vou te conectar com alguém que pode te mostrar as opções que cabem nesse momento." },
+        { label: "De R$ 50 a R$ 150", value: "medio",
+          reply: "Ótimo! Esse é o investimento de quem já está pronto pra dar o próximo passo de verdade." },
+        { label: "Mais de R$ 150", value: "alto",
+          reply: "Perfeito! Vou te conectar agora com alguém que vai te mostrar exatamente como aproveitar isso ao máximo." }
+      ]
+    },
     momento: {
       param: "momento",
       title: "Se existisse um passo a passo completo para você lucrar de verdade, você estaria pronta para começar agora?",
@@ -156,11 +170,11 @@
 
   // Sequência de perguntas de cada perfil (definido pela 1ª resposta)
   const FLOWS = {
-    iniciante: [Q.perfil, Q.motivacao, Q.desafio_iniciante, Q.meta, Q.momento],
-    ocasional: [Q.perfil, Q.desafio_ocasional, Q.divulgacao, Q.meta, Q.momento],
-    vende: [Q.perfil, Q.faturamento, Q.desafio_vende, Q.meta_vende, Q.momento]
+    iniciante: [Q.perfil, Q.motivacao, Q.desafio_iniciante, Q.meta, Q.orcamento, Q.momento],
+    ocasional: [Q.perfil, Q.desafio_ocasional, Q.divulgacao, Q.meta, Q.orcamento, Q.momento],
+    vende: [Q.perfil, Q.faturamento, Q.desafio_vende, Q.meta_vende, Q.orcamento, Q.momento]
   };
-  const TOTAL = 5;
+  const TOTAL = 6;
 
   // Texto da tela final de cada perfil
   const RESULT_TEXT = {
