@@ -29,10 +29,10 @@
 </main>
 <script>
   // Descobre o endereço inicial do quiz: no github.io fica dentro da pasta do repositório
-  (function () {
-    var parts = location.pathname.split("/").filter(Boolean);
-    var onGithubIo = /\.github\.io$/i.test(location.hostname);
-    document.getElementById("home").href = onGithubIo && parts.length ? "/" + parts[0] + "/" : "/";
+  (() => {
+    const parts = location.pathname.split("/").filter(Boolean);
+    const onGithubIo = /\.github\.io$/i.test(location.hostname);
+    document.getElementById("home").href = onGithubIo && parts.length ? `/${parts[0]}/` : "/";
   })();
 </script>
 </body>

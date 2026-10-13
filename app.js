@@ -2,16 +2,16 @@
    Quiz Doces Lucrativos — lógica da aplicação
    Você não precisa editar este arquivo: as configurações ficam no config.js
    ============================================================ */
-(function () {
+(() => {
   "use strict";
 
-  var CFG = window.QUIZ_CONFIG || {};
-  var STORAGE_KEY = "dl_quiz_v2";
-  var AUTO_ADVANCE_MS = 4000;   // tempo mínimo até a transição avançar sozinha (textos longos ganham mais tempo)
-  var LOADING_MS = 2400;        // duração da tela "Analisando..."
-  var LEAD_WAIT_MS = 300;       // espera máxima para o evento Lead sair antes do redirecionamento
-  var query = new URLSearchParams(window.location.search);
-  var DEBUG = query.get("debug") === "1";
+  const CFG = window.QUIZ_CONFIG || {};
+  const STORAGE_KEY = "dl_quiz_v2";
+  const AUTO_ADVANCE_MS = 4000;   // tempo mínimo até a transição avançar sozinha (textos longos ganham mais tempo)
+  const LOADING_MS = 2400;        // duração da tela "Analisando..."
+  const LEAD_WAIT_MS = 300;       // espera máxima para o evento Lead sair antes do redirecionamento
+  const query = new URLSearchParams(window.location.search);
+  const DEBUG = query.get("debug") === "1";
 
   // ----------------------------------------------------------
   // Perguntas
@@ -23,7 +23,7 @@
   //             reply = mensagem da tela de transição para essa resposta,
   //             short = texto curto usado no resumo da tela final)
   //   reply   → mensagem de transição padrão, quando a resposta não tem a sua
-  var Q = {
+  const Q = {
     perfil: {
       param: "perfil",
       title: "Você já vende doces hoje?",
@@ -116,15 +116,14 @@
       param: "meta",
       title: "E aonde você quer chegar nos próximos meses?",
       // As opções dependem de quanto a pessoa já fatura: a meta é sempre maior que o atual
-      options: function (answers) {
-        var porFaturamento = {
+      options: (answers) => {
+        const porFaturamento = {
           ate_1000: [["De R$ 1.000 a R$ 3.000", "1000_3000"], ["De R$ 3.000 a R$ 5.000", "3000_5000"], ["Mais de R$ 5.000", "mais_5000"]],
           "1000_3000": [["De R$ 3.000 a R$ 5.000", "3000_5000"], ["De R$ 5.000 a R$ 10.000", "5000_10000"], ["Mais de R$ 10.000", "mais_10000"]],
           mais_3000: [["De R$ 5.000 a R$ 10.000", "5000_10000"], ["De R$ 10.000 a R$ 20.000", "10000_20000"], ["Mais de R$ 20.000", "mais_20000"]]
         };
-        return (porFaturamento[answers.faturamento] || porFaturamento.ate_1000).map(function (o) {
-          return { label: o[0] + " por mês", value: o[1] };
-        });
+        return (porFaturamento[answers.faturamento] || porFaturamento.ate_1000)
+          .map(([label, value]) => ({ label: `${label} por mês`, value }));
       },
       reply: "Ótima meta! Quem já vende e acerta o preço e a divulgação costuma crescer rápido. Você está no caminho certo."
     },
@@ -153,89 +152,89 @@
       ]
     }
   };
-  Object.keys(Q).forEach(function (key) { Q[key].key = key; });
+  Object.keys(Q).forEach((key) => { Q[key].key = key; });
 
   // Sequência de perguntas de cada perfil (definido pela 1ª resposta)
-  var FLOWS = {
+  const FLOWS = {
     iniciante: [Q.perfil, Q.motivacao, Q.desafio_iniciante, Q.meta, Q.momento],
     ocasional: [Q.perfil, Q.desafio_ocasional, Q.divulgacao, Q.meta, Q.momento],
     vende: [Q.perfil, Q.faturamento, Q.desafio_vende, Q.meta_vende, Q.momento]
   };
-  var TOTAL = 5;
+  const TOTAL = 5;
 
   // Texto da tela final de cada perfil
-  var RESULT_TEXT = {
+  const RESULT_TEXT = {
     iniciante: "Você está no momento perfeito para começar do jeito certo. Com as receitas que mais vendem, a planilha que calcula o seu lucro e o método para vender no boca a boca e no digital, os seus primeiros doces já saem dando lucro.",
     ocasional: "Você já sabe que as pessoas compram os seus doces. Falta transformar as vendas soltas em rotina: as receitas certas, a planilha que calcula o seu lucro e o método para vender todo mês, no boca a boca e no digital.",
     vende: "Você já tem o mais difícil: clientes. Agora é fazer cada doce dar lucro de verdade, com a planilha que calcula o seu preço certo, receitas que rendem mais e o método para vender ainda mais no boca a boca e no digital."
   };
 
-  var TEMPERATURA = { agora: "quente", duvidas: "morno", pesquisando: "frio" };
-
-  function getFlow() { return FLOWS[state.answers.perfil] || FLOWS.iniciante; }
-  function optionsFor(q) { return typeof q.options === "function" ? q.options(state.answers) : q.options; }
-  function chosenOption(q) {
-    var value = state.answers[q.key];
-    return optionsFor(q).filter(function (o) { return o.value === value; })[0] || null;
-  }
-
-  // Respostas do caminho atual, com os nomes de parâmetro (perfil, desafio, meta...)
-  function answeredParams() {
-    var out = {};
-    getFlow().forEach(function (q) { if (state.answers[q.key]) out[q.param] = state.answers[q.key]; });
-    return out;
-  }
-  function answeredLabels() {
-    var out = {};
-    getFlow().forEach(function (q) { var o = chosenOption(q); if (o) out[q.param] = o.label; });
-    return out;
-  }
+  const TEMPERATURA = { agora: "quente", duvidas: "morno", pesquisando: "frio" };
 
   // ----------------------------------------------------------
   // Estado salvo no navegador (permite retomar de onde parou)
   // ----------------------------------------------------------
-  function loadState() {
+  const loadState = () => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch (e) { return {}; }
-  }
-  function saveState() {
+  };
+  const saveState = () => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* modo privado: segue sem salvar */ }
-  }
+  };
 
-  var state = loadState();
+  const nowIso = () => new Date().toISOString();
+
+  // lead_id curto e legível, sem caracteres ambíguos (O/0/I/1)
+  const generateLeadId = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const bytes = new Uint8Array(5);
+    if (window.crypto && window.crypto.getRandomValues) {
+      window.crypto.getRandomValues(bytes);
+    } else {
+      for (let j = 0; j < bytes.length; j++) bytes[j] = Math.floor(Math.random() * 256);
+    }
+    return "DL-" + Array.from(bytes, (b) => chars.charAt(b % chars.length)).join("");
+  };
+
+  const state = loadState();
   state.answers = state.answers || {};
   state.tracking = state.tracking || {};
   state.step = typeof state.step === "number" ? Math.max(0, Math.min(state.step, TOTAL)) : 0;
   state.leadId = state.leadId || generateLeadId();
 
-  function nowIso() { return new Date().toISOString(); }
+  // ----------------------------------------------------------
+  // Respostas
+  // ----------------------------------------------------------
+  const getFlow = () => FLOWS[state.answers.perfil] || FLOWS.iniciante;
+  const optionsFor = (q) => (typeof q.options === "function" ? q.options(state.answers) : q.options);
+  const chosenOption = (q) => optionsFor(q).find((o) => o.value === state.answers[q.key]) || null;
 
-  // lead_id curto e legível, sem caracteres ambíguos (O/0/I/1)
-  function generateLeadId() {
-    var chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    var bytes = new Uint8Array(5);
-    if (window.crypto && window.crypto.getRandomValues) {
-      window.crypto.getRandomValues(bytes);
-    } else {
-      for (var j = 0; j < bytes.length; j++) bytes[j] = Math.floor(Math.random() * 256);
-    }
-    var out = "";
-    for (var i = 0; i < bytes.length; i++) out += chars.charAt(bytes[i] % chars.length);
-    return "DL-" + out;
-  }
+  // Respostas do caminho atual, com os nomes de parâmetro (perfil, desafio, meta...)
+  const answeredParams = () => {
+    const out = {};
+    getFlow().forEach((q) => { if (state.answers[q.key]) out[q.param] = state.answers[q.key]; });
+    return out;
+  };
+  const answeredLabels = () => {
+    const out = {};
+    getFlow().forEach((q) => { const o = chosenOption(q); if (o) out[q.param] = o.label; });
+    return out;
+  };
+
+  const getTemperatura = () => TEMPERATURA[state.answers.momento] || "";
 
   // ----------------------------------------------------------
   // Cookies
   // ----------------------------------------------------------
-  function getCookie(name) {
-    var m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+  const getCookie = (name) => {
+    const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
     return m ? m[1] : "";
-  }
-  function setCookie(name, value, days) {
-    document.cookie = name + "=" + value + "; max-age=" + days * 86400 + "; path=/; SameSite=Lax" +
+  };
+  const setCookie = (name, value, days) => {
+    document.cookie = `${name}=${value}; max-age=${days * 86400}; path=/; SameSite=Lax` +
       (location.protocol === "https:" ? "; Secure" : "");
-  }
-  function getFbc() { return getCookie("_fbc") || state.fbc || ""; }
-  function getFbp() { return getCookie("_fbp"); }
+  };
+  const getFbc = () => getCookie("_fbc") || state.fbc || "";
+  const getFbp = () => getCookie("_fbp");
 
   // ----------------------------------------------------------
   // 1. Captura dos parâmetros de chegada (modelo first touch)
@@ -243,9 +242,9 @@
   // Guarda TODOS os parâmetros da URL. Se já existir um conjunto salvo de
   // uma visita anterior, ele é mantido inteiro (não mistura visitas e uma
   // visita sem parâmetros não apaga nada).
-  function captureTracking() {
-    var incoming = {};
-    query.forEach(function (value, key) {
+  const captureTracking = () => {
+    const incoming = {};
+    query.forEach((value, key) => {
       if (key !== "debug" && value !== "") incoming[key] = value;
     });
 
@@ -263,26 +262,42 @@
 
     // fbc no formato da Meta: fb.1.{timestamp_ms}.{fbclid}
     // Só recria o cookie se o fbclid for diferente do que já está nele.
-    var fbclid = query.get("fbclid");
+    const fbclid = query.get("fbclid");
     if (fbclid) {
-      var fbc = getCookie("_fbc");
+      let fbc = getCookie("_fbc");
       if (fbc.split(".").slice(3).join(".") !== fbclid) {
-        fbc = "fb.1." + Date.now() + "." + fbclid;
+        fbc = `fb.1.${Date.now()}.${fbclid}`;
         setCookie("_fbc", fbc, 90);
       }
       state.fbc = fbc; // cópia de segurança caso o navegador bloqueie cookies
     }
 
     saveState();
-  }
+  };
 
   // ----------------------------------------------------------
   // Pixel do Facebook (pelo ID do config.js ou pelo código colado)
   // ----------------------------------------------------------
-  var pixelMode = "não instalado";
-  var eventLog = [];
+  let pixelMode = "não instalado";
+  const eventLog = [];
 
-  function setupPixel() {
+  const logEvent = (name, data, note) => {
+    eventLog.push(`${new Date().toLocaleTimeString("pt-BR")}  ${name} ${JSON.stringify(data || {})}  → ${note}`);
+    renderDebug();
+  };
+
+  // custom = true para eventos personalizados (trackCustom)
+  const track = (name, data, options, custom) => {
+    const hasPixel = typeof window.fbq === "function";
+    if (hasPixel) {
+      const method = custom ? "trackCustom" : "track";
+      if (options) window.fbq(method, name, data || {}, options);
+      else window.fbq(method, name, data || {});
+    }
+    logEvent(name, data, hasPixel ? (options && options.eventID ? "eventID " + options.eventID : "enviado") : "sem pixel (não enviado)");
+  };
+
+  const setupPixel = () => {
     // Código completo colado no <head>: ele já fez init + PageView
     if (typeof window.fbq === "function") {
       pixelMode = "código colado no index.html";
@@ -290,7 +305,7 @@
       return;
     }
 
-    var id = String(CFG.metaPixelId || "").trim();
+    const id = String(CFG.metaPixelId || "").trim();
     if (!id) return;
     if (!/^\d+$/.test(id)) {
       pixelMode = "ID inválido no config.js (use só números)";
@@ -298,44 +313,29 @@
     }
 
     // Fila oficial do fbq: os eventos ficam guardados até o script da Meta carregar
-    var n = window.fbq = function () {
-      if (n.callMethod) n.callMethod.apply(n, arguments); else n.queue.push(arguments);
+    const n = (...args) => {
+      if (n.callMethod) n.callMethod(...args); else n.queue.push(args);
     };
+    window.fbq = n;
     if (!window._fbq) window._fbq = n;
     n.push = n;
     n.loaded = true;
     n.version = "2.0";
     n.queue = [];
 
-    pixelMode = "ID do config.js (" + id + ")";
+    pixelMode = `ID do config.js (${id})`;
     n("init", id);
     track("PageView");
 
     // Carrega o script da Meta só depois da página pronta, para não atrasar a abertura
-    var inject = function () {
-      var s = document.createElement("script");
+    const inject = () => {
+      const s = document.createElement("script");
       s.async = true;
       s.src = "https://connect.facebook.net/en_US/fbevents.js";
       document.head.appendChild(s);
     };
     if (document.readyState === "complete") inject(); else window.addEventListener("load", inject);
-  }
-
-  // custom = true para eventos personalizados (trackCustom)
-  function track(name, data, options, custom) {
-    var hasPixel = typeof window.fbq === "function";
-    if (hasPixel) {
-      var method = custom ? "trackCustom" : "track";
-      if (options) window.fbq(method, name, data || {}, options);
-      else window.fbq(method, name, data || {});
-    }
-    logEvent(name, data, hasPixel ? (options && options.eventID ? "eventID " + options.eventID : "enviado") : "sem pixel (não enviado)");
-  }
-
-  function logEvent(name, data, note) {
-    eventLog.push(new Date().toLocaleTimeString("pt-BR") + "  " + name + " " + JSON.stringify(data || {}) + "  → " + note);
-    renderDebug();
-  }
+  };
 
   // ----------------------------------------------------------
   // 2. Montagem do link final
@@ -345,42 +345,39 @@
   //   2º os dados gerados pelo quiz (lead_id, fbc, fbp, respostas, temperatura)
   //   3º os parâmetros que chegaram na URL (fbclid, utm_*, ids de campanha...)
   // Parâmetros vazios nunca são adicionados. A API URL cuida do encode.
-  function buildRedirectUrl() {
-    var url = new URL(String(CFG.redirectUrl || "").trim());
+  const buildRedirectUrl = () => {
+    const url = new URL(String(CFG.redirectUrl || "").trim());
 
-    function add(key, value) {
+    const add = (key, value) => {
       if (value === undefined || value === null || String(value) === "") return;
       if (url.searchParams.has(key)) return; // quem chegou primeiro vence
       url.searchParams.set(key, String(value));
-    }
+    };
 
     add("lead_id", state.leadId);
     add("fbc", getFbc());
     add("fbp", getFbp());
 
     if (CFG.sendAnswersInUrl) {
-      var answers = answeredParams();
-      Object.keys(answers).forEach(function (key) { add(key, answers[key]); });
+      Object.entries(answeredParams()).forEach(([key, value]) => add(key, value));
       add("temperatura", getTemperatura());
     }
 
-    Object.keys(state.tracking).forEach(function (key) { add(key, state.tracking[key]); });
+    Object.entries(state.tracking).forEach(([key, value]) => add(key, value));
 
     return url.toString();
-  }
+  };
 
-  function isRedirectConfigured() {
-    var raw = String(CFG.redirectUrl || "").trim();
+  const isRedirectConfigured = () => {
+    const raw = String(CFG.redirectUrl || "").trim();
     if (!raw || /COLE-AQUI/i.test(raw)) return false;
     try {
-      var u = new URL(raw);
+      const u = new URL(raw);
       return u.protocol === "https:" || u.protocol === "http:";
     } catch (e) {
       return false;
     }
-  }
-
-  function getTemperatura() { return TEMPERATURA[state.answers.momento] || ""; }
+  };
 
   // ----------------------------------------------------------
   // 3. Webhook (opcional)
@@ -388,15 +385,15 @@
   // Enviado como formulário (application/x-www-form-urlencoded): é o formato
   // que n8n, Make e Zapier leem sem configuração e que o navegador envia sem
   // bloqueio de CORS. O campo "json" traz tudo junto em JSON.
-  function sendWebhook(finalUrl) {
-    var endpoint = String(CFG.webhookUrl || "").trim();
+  const sendWebhook = (finalUrl) => {
+    const endpoint = String(CFG.webhookUrl || "").trim();
     if (!endpoint) return;
 
-    var answers = answeredParams();
-    var data = {
+    const answers = answeredParams();
+    const data = {
       lead_id: state.leadId,
       temperatura: getTemperatura(),
-      answers: answers,
+      answers,
       answer_labels: answeredLabels(),
       params: state.tracking,
       fbc: getFbc(),
@@ -412,81 +409,77 @@
       clicked_at: state.clickedAt || ""
     };
 
-    var flat = Object.assign({}, state.tracking, answers, data);
-    delete flat.answers;
-    delete flat.answer_labels;
-    delete flat.params;
+    const { answers: _a, answer_labels: _l, params: _p, ...fields } = data;
+    const flat = { ...state.tracking, ...answers, ...fields };
 
-    var form = new URLSearchParams();
-    Object.keys(flat).forEach(function (k) { if (flat[k] !== "") form.append(k, flat[k]); });
+    const form = new URLSearchParams();
+    Object.entries(flat).forEach(([k, v]) => { if (v !== "") form.append(k, v); });
     form.append("json", JSON.stringify(data));
 
-    var sent = false;
+    let sent = false;
     try { sent = !!(navigator.sendBeacon && navigator.sendBeacon(endpoint, form)); } catch (e) { sent = false; }
     if (!sent) {
       try {
-        fetch(endpoint, { method: "POST", body: form, mode: "no-cors", keepalive: true }).catch(function () {});
+        fetch(endpoint, { method: "POST", body: form, mode: "no-cors", keepalive: true }).catch(() => {});
       } catch (e) { /* nunca bloqueia o redirecionamento */ }
     }
     logEvent("Webhook", { url: endpoint }, sent ? "enviado (sendBeacon)" : "enviado (fetch)");
-  }
+  };
 
   // ----------------------------------------------------------
   // Navegação entre telas
   // ----------------------------------------------------------
-  function $(id) { return document.getElementById(id); }
+  const $ = (id) => document.getElementById(id);
 
-  var screens = {
+  const screens = {
     intro: $("screen-intro"),
     question: $("screen-question"),
     transition: $("screen-transition"),
     loading: $("screen-loading"),
     result: $("screen-result")
   };
-  var currentScreen = "intro";
-  var lockUntil = 0;
-  var autoTimer = null;
-  var loadingTimer = null;
+  let currentScreen = "intro";
+  let lockUntil = 0;
+  let autoTimer = null;
+  let loadingTimer = null;
 
-  function show(name, moveFocus) {
+  const updateProgress = () => {
+    const done = { intro: 0, question: state.step + 1, transition: state.step, loading: TOTAL, result: TOTAL }[currentScreen];
+    $("progressFill").style.width = (done / TOTAL) * 100 + "%";
+    $("topbar").classList.toggle("visible", currentScreen !== "intro");
+  };
+
+  const show = (name, moveFocus) => {
     clearTimeout(autoTimer);
     clearTimeout(loadingTimer);
-    Object.keys(screens).forEach(function (k) { screens[k].classList.toggle("active", k === name); });
+    Object.keys(screens).forEach((k) => screens[k].classList.toggle("active", k === name));
     currentScreen = name;
     // bloqueia toques por um instante: evita que um toque duplo "atravesse" para a tela seguinte
     lockUntil = Date.now() + 350;
     updateProgress();
     window.scrollTo(0, 0);
     if (moveFocus !== false) {
-      var target = screens[name].querySelector("[tabindex='-1']");
+      const target = screens[name].querySelector("[tabindex='-1']");
       if (target) target.focus({ preventScroll: true });
     }
     renderDebug();
-  }
+  };
 
-  function guard(fn) {
-    return function (e) {
-      if (Date.now() < lockUntil) return;
-      fn(e);
-    };
-  }
-
-  function updateProgress() {
-    var done = { intro: 0, question: state.step + 1, transition: state.step, loading: TOTAL, result: TOTAL }[currentScreen];
-    $("progressFill").style.width = (done / TOTAL) * 100 + "%";
-    $("topbar").classList.toggle("visible", currentScreen !== "intro");
-  }
+  const guard = (fn) => (e) => {
+    if (Date.now() < lockUntil) return;
+    fn(e);
+  };
 
   // ---------- Abertura ----------
-  function setupIntro() {
-    var resuming = state.step > 0 && state.step < TOTAL;
+  const setupIntro = () => {
+    const resuming = state.step > 0 && state.step < TOTAL;
     $("btnStart").textContent = resuming ? "Continuar de onde parei" : "Começar agora";
     $("resumeNote").hidden = !resuming;
-    $("resumeNote").textContent = "Você já respondeu " + state.step + " de " + TOTAL + " perguntas.";
+    $("resumeNote").textContent = `Você já respondeu ${state.step} de ${TOTAL} perguntas.`;
     $("btnRestart").hidden = !resuming;
-  }
+  };
 
-  function start() {
+  const start = () => {
     if (!state.startedAt) {
       state.startedAt = nowIso();
       saveState();
@@ -494,9 +487,9 @@
     }
     if (state.step >= TOTAL) showLoading();
     else renderQuestion(state.step);
-  }
+  };
 
-  function restart() {
+  const restart = () => {
     state.answers = {};
     state.step = 0;
     state.startedAt = nowIso();
@@ -504,51 +497,51 @@
     saveState();
     track("QuizStart", { recomeco: true }, null, true);
     renderQuestion(0);
-  }
+  };
 
   // ---------- Perguntas ----------
-  function renderQuestion(index) {
-    var q = getFlow()[index];
+  const renderQuestion = (index) => {
+    const q = getFlow()[index];
     state.step = index;
     saveState();
 
     $("questionTitle").textContent = q.title;
-    $("stepLabel").textContent = "Pergunta " + (index + 1) + " de " + TOTAL;
+    $("stepLabel").textContent = `Pergunta ${index + 1} de ${TOTAL}`;
 
-    var box = $("options");
+    const box = $("options");
     box.textContent = "";
     box.classList.remove("locked");
-    optionsFor(q).forEach(function (opt) {
-      var b = document.createElement("button");
+    optionsFor(q).forEach((opt) => {
+      const b = document.createElement("button");
       b.type = "button";
       b.className = "option";
       b.textContent = opt.label;
       b.setAttribute("aria-pressed", String(state.answers[q.key] === opt.value));
-      b.addEventListener("click", guard(function () { selectOption(index, opt.value, b); }));
+      b.addEventListener("click", guard(() => selectOption(index, opt.value, b)));
       box.appendChild(b);
     });
 
     show("question");
-  }
+  };
 
   // Marca a opção escolhida por um instante (feedback visual) e segue
-  function selectOption(index, value, btn) {
-    var box = $("options");
+  const selectOption = (index, value, btn) => {
+    const box = $("options");
     if (box.classList.contains("locked")) return;
     box.classList.add("locked");
-    Array.prototype.forEach.call(box.children, function (b) { b.setAttribute("aria-pressed", String(b === btn)); });
-    setTimeout(function () { answer(index, value); }, 180);
-  }
+    Array.from(box.children).forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+    setTimeout(() => answer(index, value), 180);
+  };
 
-  function answer(index, value) {
-    var flow = getFlow();
-    var q = flow[index];
+  const answer = (index, value) => {
+    const flow = getFlow();
+    const q = flow[index];
 
     // Mudou a resposta? As perguntas seguintes podem ter mudado (outro caminho
     // ou outras opções), então as respostas posteriores são descartadas.
     if (state.answers[q.key] !== value) {
-      var keep = {};
-      flow.slice(0, index).forEach(function (x) {
+      const keep = {};
+      flow.slice(0, index).forEach((x) => {
         if (state.answers[x.key]) keep[x.key] = state.answers[x.key];
       });
       state.answers = keep;
@@ -559,41 +552,41 @@
 
     track("QuizStep", { step: index + 1, pergunta: q.param, resposta: value, perfil: state.answers.perfil }, null, true);
 
-    var reply = (chosenOption(q) || {}).reply || q.reply || "";
+    const reply = (chosenOption(q) || {}).reply || q.reply || "";
     $("transitionText").textContent = reply;
     show("transition");
 
     // Textos mais longos ficam mais tempo na tela (~230ms por palavra, entre 4s e 7s)
-    var ms = Math.min(7000, Math.max(AUTO_ADVANCE_MS, reply.split(/\s+/).length * 230));
-    var btn = $("btnContinue");
+    const ms = Math.min(7000, Math.max(AUTO_ADVANCE_MS, reply.split(/\s+/).length * 230));
+    const btn = $("btnContinue");
     btn.style.setProperty("--countdown", ms + "ms");
     btn.classList.remove("counting");
     void btn.offsetWidth; // reinicia a animação da barrinha de contagem
     btn.classList.add("counting");
     autoTimer = setTimeout(advance, ms);
-  }
+  };
 
-  function advance() {
+  const advance = () => {
     if (state.step >= TOTAL) showLoading();
     else renderQuestion(state.step);
-  }
+  };
 
   // Volta uma pergunta. Da pergunta 1, volta para a abertura.
-  function goBack() {
+  const goBack = () => {
     if (currentScreen === "intro") return;
-    var target = state.step - 1;
+    const target = state.step - 1;
     if (target < 0) {
       setupIntro();
       show("intro");
     } else {
       renderQuestion(target);
     }
-  }
+  };
 
   // ---------- Carregando e resultado ----------
-  function showLoading() {
+  const showLoading = () => {
     show("loading");
-    loadingTimer = setTimeout(function () {
+    loadingTimer = setTimeout(() => {
       if (!state.completedAt) {
         state.completedAt = nowIso();
         saveState();
@@ -601,33 +594,32 @@
       track("QuizComplete", { temperatura: getTemperatura(), perfil: state.answers.perfil }, null, true);
       renderResult();
     }, LOADING_MS);
-  }
+  };
 
-  function renderResult(moveFocus) {
+  const renderResult = (moveFocus) => {
     $("resultText").textContent = RESULT_TEXT[state.answers.perfil] || RESULT_TEXT.iniciante;
 
     // Resumo do perfil: momento, maior desafio e meta
-    var labelOf = function (param) {
-      var q = getFlow().filter(function (x) { return x.param === param; })[0];
-      var o = q && chosenOption(q);
+    const labelOf = (param) => {
+      const q = getFlow().find((x) => x.param === param);
+      const o = q && chosenOption(q);
       return o ? (o.short || o.label) : "";
     };
-    var rows = [
+    const rows = [
       ["Seu momento", labelOf("perfil")],
       ["Seu maior desafio", labelOf("desafio")],
       ["Sua meta", labelOf("meta")]
-    ].filter(function (r) { return r[1]; });
+    ].filter(([, value]) => value);
 
-    var profile = $("profile");
+    const profile = $("profile");
     profile.textContent = "";
-    rows.forEach(function (r) {
-      var wrap = document.createElement("div");
-      var dt = document.createElement("dt");
-      var dd = document.createElement("dd");
-      dt.textContent = r[0];
-      dd.textContent = r[1];
-      wrap.appendChild(dt);
-      wrap.appendChild(dd);
+    rows.forEach(([label, value]) => {
+      const wrap = document.createElement("div");
+      const dt = document.createElement("dt");
+      const dd = document.createElement("dd");
+      dt.textContent = label;
+      dd.textContent = value;
+      wrap.append(dt, dd);
       profile.appendChild(wrap);
     });
     profile.hidden = rows.length === 0;
@@ -635,24 +627,24 @@
     $("redirectWarning").hidden = !(DEBUG && !isRedirectConfigured());
     resetFinalButton();
     show("result", moveFocus);
-  }
+  };
 
-  var redirecting = false;
+  let redirecting = false;
 
-  function resetFinalButton() {
+  const resetFinalButton = () => {
     redirecting = false;
-    var b = $("btnFinal");
+    const b = $("btnFinal");
     b.textContent = CFG.buttonText || "Continuar";
     b.classList.remove("is-loading");
     b.removeAttribute("aria-busy");
-  }
+  };
 
   // Clique final: Lead no pixel → webhook → redirecionamento
-  function onFinalClick() {
+  const onFinalClick = () => {
     if (redirecting) return;
 
-    var configured = isRedirectConfigured();
-    var finalUrl = configured ? buildRedirectUrl() : "";
+    const configured = isRedirectConfigured();
+    const finalUrl = configured ? buildRedirectUrl() : "";
 
     state.clickedAt = nowIso();
     saveState();
@@ -672,79 +664,42 @@
     }
 
     redirecting = true;
-    var b = $("btnFinal");
+    const b = $("btnFinal");
     b.textContent = "Abrindo...";
     b.classList.add("is-loading");
     b.setAttribute("aria-busy", "true");
 
     // Dá até 300ms para o pixel enviar o Lead; redireciona de qualquer jeito
-    setTimeout(function () {
+    setTimeout(() => {
       window.location.href = finalUrl;
     }, typeof window.fbq === "function" ? LEAD_WAIT_MS : 0);
-  }
+  };
 
   // ----------------------------------------------------------
   // Botão "voltar" do celular: volta uma pergunta em vez de sair do quiz
   // ----------------------------------------------------------
-  var backTrapArmed = false;
+  let backTrapArmed = false;
 
-  function armBackTrap() {
+  const armBackTrap = () => {
     if (backTrapArmed || currentScreen === "intro") return;
     try {
       history.pushState({ dlQuiz: true }, "");
       backTrapArmed = true;
     } catch (e) { /* navegador sem suporte: segue normal */ }
-  }
-
-  window.addEventListener("popstate", function () {
-    backTrapArmed = false;
-    if (currentScreen === "intro") return;
-    goBack();
-    armBackTrap();
-  });
+  };
 
   // ----------------------------------------------------------
   // 4. Painel de debug (?debug=1)
   // ----------------------------------------------------------
-  var debugBody = null;
+  let debugBody = null;
 
-  function initDebug() {
-    if (!DEBUG) return;
-    document.body.classList.add("has-debug");
-    var panel = $("debugPanel");
-    panel.hidden = false;
-    panel.classList.add("collapsed");
-    panel.innerHTML =
-      '<div class="debug-head"><strong>Modo debug (não redireciona)</strong><span>' +
-      '<button type="button" data-act="copy">Copiar URL</button> ' +
-      '<button type="button" data-act="reset">Limpar dados</button> ' +
-      '<button type="button" data-act="toggle" aria-expanded="false">Expandir</button>' +
-      "</span></div><div class=\"debug-body\"></div>";
-    debugBody = panel.querySelector(".debug-body");
+  const previewUrl = () => {
+    try { return buildRedirectUrl(); } catch (e) { return `(link inválido no config.js: ${CFG.redirectUrl})`; }
+  };
 
-    panel.addEventListener("click", function (e) {
-      var act = e.target.getAttribute && e.target.getAttribute("data-act");
-      if (act === "copy") copyText(previewUrl(), e.target);
-      if (act === "toggle") {
-        var collapsed = panel.classList.toggle("collapsed");
-        e.target.textContent = collapsed ? "Expandir" : "Minimizar";
-        e.target.setAttribute("aria-expanded", String(!collapsed));
-      }
-      if (act === "reset") {
-        try { localStorage.removeItem(STORAGE_KEY); } catch (err) { /* ignora */ }
-        document.cookie = "_fbc=; max-age=0; path=/";
-        location.reload();
-      }
-    });
-  }
-
-  function previewUrl() {
-    try { return buildRedirectUrl(); } catch (e) { return "(link inválido no config.js: " + CFG.redirectUrl + ")"; }
-  }
-
-  function renderDebug() {
+  const renderDebug = () => {
     if (!debugBody) return;
-    var rows = [];
+    const rows = [];
     if (!isRedirectConfigured()) {
       rows.push(["Atenção", "redirectUrl ainda não foi configurado no config.js. A URL abaixo usa o texto de exemplo só para mostrar os parâmetros.", "alert"]);
     }
@@ -762,41 +717,40 @@
     );
 
     debugBody.textContent = "";
-    rows.forEach(function (r) {
-      var row = document.createElement("div");
-      row.className = "debug-row" + (r[2] === "alert" ? " alert" : "");
-      if (r[2] === "url") row.id = "debugUrlRow";
-      var b = document.createElement("b");
-      var pre = document.createElement("pre");
-      b.textContent = r[0];
-      pre.textContent = r[1];
-      row.appendChild(b);
-      row.appendChild(pre);
+    rows.forEach(([label, value, kind]) => {
+      const row = document.createElement("div");
+      row.className = "debug-row" + (kind === "alert" ? " alert" : "");
+      if (kind === "url") row.id = "debugUrlRow";
+      const b = document.createElement("b");
+      const pre = document.createElement("pre");
+      b.textContent = label;
+      pre.textContent = value;
+      row.append(b, pre);
       debugBody.appendChild(row);
     });
-  }
+  };
 
-  function openDebugAtUrl() {
-    var panel = $("debugPanel");
+  const openDebugAtUrl = () => {
+    const panel = $("debugPanel");
     panel.classList.remove("collapsed");
-    var toggle = panel.querySelector('[data-act="toggle"]');
+    const toggle = panel.querySelector('[data-act="toggle"]');
     toggle.textContent = "Minimizar";
     toggle.setAttribute("aria-expanded", "true");
     renderDebug();
-    var row = $("debugUrlRow");
+    const row = $("debugUrlRow");
     if (row) {
       row.classList.add("highlight");
       panel.scrollTop = Math.max(0, row.offsetTop - 40);
     }
-  }
+  };
 
-  function copyText(text, btn) {
-    var done = function () {
+  const copyText = (text, btn) => {
+    const done = () => {
       btn.textContent = "Copiado!";
-      setTimeout(function () { btn.textContent = "Copiar URL"; }, 1500);
+      setTimeout(() => { btn.textContent = "Copiar URL"; }, 1500);
     };
-    var fallback = function () {
-      var ta = document.createElement("textarea");
+    const fallback = () => {
+      const ta = document.createElement("textarea");
       ta.value = text;
       ta.setAttribute("readonly", "");
       ta.style.position = "fixed";
@@ -812,7 +766,37 @@
     } else {
       fallback();
     }
-  }
+  };
+
+  const initDebug = () => {
+    if (!DEBUG) return;
+    document.body.classList.add("has-debug");
+    const panel = $("debugPanel");
+    panel.hidden = false;
+    panel.classList.add("collapsed");
+    panel.innerHTML =
+      '<div class="debug-head"><strong>Modo debug (não redireciona)</strong><span>' +
+      '<button type="button" data-act="copy">Copiar URL</button> ' +
+      '<button type="button" data-act="reset">Limpar dados</button> ' +
+      '<button type="button" data-act="toggle" aria-expanded="false">Expandir</button>' +
+      '</span></div><div class="debug-body"></div>';
+    debugBody = panel.querySelector(".debug-body");
+
+    panel.addEventListener("click", (e) => {
+      const act = e.target.getAttribute && e.target.getAttribute("data-act");
+      if (act === "copy") copyText(previewUrl(), e.target);
+      if (act === "toggle") {
+        const collapsed = panel.classList.toggle("collapsed");
+        e.target.textContent = collapsed ? "Expandir" : "Minimizar";
+        e.target.setAttribute("aria-expanded", String(!collapsed));
+      }
+      if (act === "reset") {
+        try { localStorage.removeItem(STORAGE_KEY); } catch (err) { /* ignora */ }
+        document.cookie = "_fbc=; max-age=0; path=/";
+        location.reload();
+      }
+    });
+  };
 
   // ----------------------------------------------------------
   // Inicialização
@@ -826,7 +810,7 @@
   $("btnRedo").addEventListener("click", guard(restart));
   $("btnContinue").addEventListener("click", guard(advance));
   $("btnFinal").addEventListener("click", onFinalClick);
-  $("btnBack").addEventListener("click", guard(function () {
+  $("btnBack").addEventListener("click", guard(() => {
     goBack();
     if (currentScreen === "intro" && backTrapArmed) {
       backTrapArmed = false;
@@ -834,11 +818,18 @@
     }
   }));
 
+  window.addEventListener("popstate", () => {
+    backTrapArmed = false;
+    if (currentScreen === "intro") return;
+    goBack();
+    armBackTrap();
+  });
+
   // Ativa a proteção do botão voltar a cada toque dentro do quiz
   document.addEventListener("click", armBackTrap);
 
   // Se a pessoa voltar do link final pelo "voltar", o botão volta ao normal
-  window.addEventListener("pageshow", function (e) { if (e.persisted) resetFinalButton(); });
+  window.addEventListener("pageshow", (e) => { if (e.persisted) resetFinalButton(); });
 
   // Retomar de onde parou
   if (state.step >= TOTAL) {
